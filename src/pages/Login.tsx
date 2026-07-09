@@ -23,7 +23,7 @@ export default function Login() {
   const navigate = useNavigate()
   const { toast } = useToast()
 
-  if (user) return <Navigate to="/" replace />
+  if (user) return <Navigate to="/checklist" replace />
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,7 +37,7 @@ export default function Login() {
         variant: 'destructive',
       })
     } else {
-      navigate('/')
+      navigate('/checklist')
     }
     setIsLoading(false)
   }
