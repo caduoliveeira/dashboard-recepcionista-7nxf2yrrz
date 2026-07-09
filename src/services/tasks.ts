@@ -23,6 +23,23 @@ export type TaskCompletion = {
   } | null
 }
 
+export type CompletionWithTask = {
+  id: string
+  task_id: string
+  completed_by: string | null
+  completed_at: string
+  notes: string | null
+  tasks: {
+    id: string
+    title: string
+    category: string
+    expected_time: string | null
+  } | null
+  profiles: {
+    full_name: string | null
+  } | null
+}
+
 export type CreateTaskInput = {
   title: string
   description?: string | null
@@ -92,6 +109,30 @@ export const markTaskComplete = async (taskId: string, userId: string) => {
     : null
 
   return { data: formattedData, error }
+}
+
+export const fetchRecentCompletions = async (days = 7) => {
+  const since = new Date()
+  since.setDate(since.getDate() - days)
+  since.setHours(0, 0, 0, 0)
+
+  const { data, error } = await supabase
+    .from('task_completions')
+    .select(`
+      id, task_id, completed_by, completed_at, notes,
+      tasks ( id, title, category, expected_time ),
+      profiles ( full_name )
+    `)
+    .gte('completed_at', since.toISOString())
+    .order('completed_at', { ascending: false })
+
+  const formatted = (data || []).map((item: any) => ({
+    ...item,
+    tasks: Array.isArray(item.tasks) ? item.tasks[0] : item.tasks,
+    profiles: Array.isArray(item.profiles) ? item.profiles[0] : item.profiles,
+  })) as CompletionWithTask[]
+
+  return { data: formatted, error }
 }
 
 export const createTask = async (input: CreateTaskInput) => {

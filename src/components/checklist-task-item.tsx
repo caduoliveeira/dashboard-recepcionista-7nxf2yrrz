@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button'
-import { CheckCircle2, Circle, Clock, Repeat } from 'lucide-react'
+import { CheckCircle2, Circle, Clock, Repeat, AlertTriangle, Timer } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Task, TaskCompletion } from '@/services/tasks'
+import { isTaskOverdue, isTaskUpcoming, wasCompletedLate } from '@/lib/task-utils'
 
 interface ChecklistTaskItemProps {
   task: Task
@@ -11,9 +12,18 @@ interface ChecklistTaskItemProps {
 
 export function ChecklistTaskItem({ task, completion, onComplete }: ChecklistTaskItemProps) {
   const isCompleted = !!completion
+  const overdue = isTaskOverdue(task.expected_time, isCompleted)
+  const upcoming = isTaskUpcoming(task.expected_time, isCompleted)
+  const completedLate =
+    isCompleted && wasCompletedLate(completion!.completed_at, task.expected_time)
 
   return (
-    <li className={cn('p-4 transition-colors', isCompleted ? 'bg-card/50' : 'hover:bg-muted/30')}>
+    <li
+      className={cn(
+        'p-4 transition-colors',
+        isCompleted ? 'bg-card/50' : overdue ? 'bg-destructive/5' : 'hover:bg-muted/30',
+      )}
+    >
       <div className="flex items-start gap-4">
         <Button
           variant="ghost"
@@ -34,16 +44,35 @@ export function ChecklistTaskItem({ task, completion, onComplete }: ChecklistTas
           )}
         </Button>
         <div className="space-y-1.5 flex-1 pt-1">
-          <p
-            className={cn(
-              'font-medium text-[15px] leading-tight transition-all',
-              isCompleted
-                ? 'text-muted-foreground line-through decoration-muted-foreground/30'
-                : 'text-foreground',
-            )}
-          >
-            {task.title}
-          </p>
+          <div className="flex items-start justify-between gap-2">
+            <p
+              className={cn(
+                'font-medium text-[15px] leading-tight transition-all',
+                isCompleted
+                  ? 'text-muted-foreground line-through decoration-muted-foreground/30'
+                  : 'text-foreground',
+              )}
+            >
+              {task.title}
+            </p>
+            <div className="flex flex-wrap gap-1 shrink-0">
+              {overdue && (
+                <span className="text-[10px] font-semibold text-destructive bg-destructive/10 px-2 py-0.5 rounded-full border border-destructive/20 flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" /> Atrasada
+                </span>
+              )}
+              {upcoming && (
+                <span className="text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                  <Timer className="h-3 w-3" /> Próxima
+                </span>
+              )}
+              {completedLate && (
+                <span className="text-[10px] font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200 flex items-center gap-1">
+                  <Clock className="h-3 w-3" /> Concluída com Atraso
+                </span>
+              )}
+            </div>
+          </div>
           {task.description && (
             <p
               className={cn(
@@ -54,34 +83,38 @@ export function ChecklistTaskItem({ task, completion, onComplete }: ChecklistTas
               {task.description}
             </p>
           )}
-          {task.expected_time && (
-            <div
-              className={cn(
-                'flex items-center text-[11px] font-medium w-fit px-1.5 py-0.5 rounded border mt-2 transition-all',
-                isCompleted
-                  ? 'text-muted-foreground/50 bg-muted/20 border-border/50'
-                  : 'text-primary/80 bg-primary/5 border-primary/10',
-              )}
-            >
-              <Clock className="h-3 w-3 mr-1" />
-              {task.expected_time.slice(0, 5)}
-            </div>
-          )}
-          {task.is_recurring && !isCompleted && (
-            <div className="flex items-center gap-1 text-[11px] font-medium text-primary/70 bg-primary/5 w-fit px-2 py-0.5 rounded-full border border-primary/10 mt-1">
-              <Repeat className="h-3 w-3" />
-              {task.recurrence_type === 'daily' ? 'Diária' : 'Semanal'}
-            </div>
-          )}
-          {isCompleted && (
-            <div className="flex items-center gap-1.5 text-[11px] text-primary/80 font-medium mt-2 bg-primary/5 w-fit px-2 py-0.5 rounded-full border border-primary/10">
-              ✓ Concluído às{' '}
-              {new Date(completion!.completed_at).toLocaleTimeString('pt-BR', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            {task.expected_time && (
+              <div
+                className={cn(
+                  'flex items-center text-[11px] font-medium px-1.5 py-0.5 rounded border transition-all',
+                  isCompleted
+                    ? 'text-muted-foreground/50 bg-muted/20 border-border/50'
+                    : overdue
+                      ? 'text-destructive bg-destructive/5 border-destructive/20'
+                      : 'text-primary/80 bg-primary/5 border-primary/10',
+                )}
+              >
+                <Clock className="h-3 w-3 mr-1" />
+                {task.expected_time.slice(0, 5)}
+              </div>
+            )}
+            {task.is_recurring && !isCompleted && (
+              <div className="flex items-center gap-1 text-[11px] font-medium text-primary/70 bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10">
+                <Repeat className="h-3 w-3" />
+                {task.recurrence_type === 'daily' ? 'Diária' : 'Semanal'}
+              </div>
+            )}
+            {isCompleted && (
+              <div className="flex items-center gap-1.5 text-[11px] text-primary/80 font-medium bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10">
+                ✓ Concluído às{' '}
+                {new Date(completion!.completed_at).toLocaleTimeString('pt-BR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </li>

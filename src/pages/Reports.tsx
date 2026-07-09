@@ -1,7 +1,14 @@
-import { useState, useEffect } from 'react'
-import { fetchTasks, fetchTodayCompletions, Task, TaskCompletion } from '@/services/tasks'
-import { useAuth } from '@/hooks/use-auth'
+import { useState, useEffect, useMemo } from 'react'
 import { Navigate } from 'react-router-dom'
+import {
+  fetchTasks,
+  fetchTodayCompletions,
+  fetchRecentCompletions,
+  type Task,
+  type TaskCompletion,
+  type CompletionWithTask,
+} from '@/services/tasks'
+import { useAuth } from '@/hooks/use-auth'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import {
   Table,
@@ -12,15 +19,23 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
-import { CheckCircle2, Clock, AlertTriangle, Activity } from 'lucide-react'
+import { Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { cn } from '@/lib/utils'
+import { PunctualityCards } from '@/components/punctuality-cards'
+import { DelayedTasksList } from '@/components/delayed-tasks-list'
+import { wasCompletedLate, isTaskOverdue } from '@/lib/task-utils'
+
+const CATEGORY_LABELS: Record<string, string> = {
+  Opening: 'Abertura',
+  Shift: 'Turno',
+  Closing: 'Fechamento',
+}
 
 export default function Reports() {
   const { role } = useAuth()
   const [tasks, setTasks] = useState<Task[]>([])
   const [completions, setCompletions] = useState<TaskCompletion[]>([])
+  const [recentCompletions, setRecentCompletions] = useState<CompletionWithTask[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -29,66 +44,77 @@ export default function Reports() {
 
   const loadData = async () => {
     setLoading(true)
-    const [tasksRes, completionsRes] = await Promise.all([fetchTasks(), fetchTodayCompletions()])
-    if (tasksRes.data) setTasks(tasksRes.data)
-    if (completionsRes.data) setCompletions(completionsRes.data)
+    const [t, c, r] = await Promise.all([
+      fetchTasks(),
+      fetchTodayCompletions(),
+      fetchRecentCompletions(7),
+    ])
+    if (t.data) setTasks(t.data)
+    if (c.data) setCompletions(c.data)
+    if (r.data) setRecentCompletions(r.data)
     setLoading(false)
   }
 
+  const stats = useMemo(() => {
+    const completedIds = new Set(completions.map((c) => c.task_id))
+    const completedCount = completions.length
+    const totalTasks = tasks.length
+    const progress = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0
+    const onTimeCount = completions.filter((c) => {
+      const task = tasks.find((t) => t.id === c.task_id)
+      return task && !wasCompletedLate(c.completed_at, task.expected_time)
+    }).length
+    const onTimeRate = completedCount > 0 ? Math.round((onTimeCount / completedCount) * 100) : 100
+    const delayedCount = tasks.filter(
+      (t) => !completedIds.has(t.id) && isTaskOverdue(t.expected_time, false),
+    ).length
+    const pendingCount = totalTasks - completedCount
+
+    const delayedMap = new Map<
+      string,
+      { title: string; category: string; lateCount: number; totalCount: number }
+    >()
+    recentCompletions.forEach((c) => {
+      if (!c.tasks) return
+      const ex = delayedMap.get(c.task_id) || {
+        title: c.tasks.title,
+        category: c.tasks.category,
+        lateCount: 0,
+        totalCount: 0,
+      }
+      ex.totalCount++
+      if (wasCompletedLate(c.completed_at, c.tasks.expected_time)) ex.lateCount++
+      delayedMap.set(c.task_id, ex)
+    })
+    const frequentlyDelayed = Array.from(delayedMap.values())
+      .filter((s) => s.lateCount > 0)
+      .sort((a, b) => b.lateCount - a.lateCount)
+      .slice(0, 5)
+
+    return {
+      progress,
+      onTimeRate,
+      delayedCount,
+      pendingCount,
+      completedCount,
+      totalTasks,
+      frequentlyDelayed,
+    }
+  }, [tasks, completions, recentCompletions])
+
+  if (role !== 'owner') return <Navigate to="/checklist" replace />
   if (loading) {
     return (
       <div className="space-y-6">
-        <div>
-          <Skeleton className="h-10 w-64 mb-2" />
-          <Skeleton className="h-5 w-96" />
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
-          <Skeleton className="h-32" />
+        <Skeleton className="h-10 w-64" />
+        <div className="grid gap-4 md:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
         </div>
         <Skeleton className="h-[400px]" />
       </div>
     )
-  }
-
-  const completedCount = completions.length
-  const totalCount = tasks.length
-  const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
-
-  // Calculate late tasks
-  let lateCount = 0
-  tasks.forEach((task) => {
-    const completion = completions.find((c) => c.task_id === task.id)
-    if (completion && task.expected_time) {
-      const completedDate = new Date(completion.completed_at)
-      const expectedHour = parseInt(task.expected_time.split(':')[0], 10)
-      const expectedMin = parseInt(task.expected_time.split(':')[1], 10)
-
-      const expectedDate = new Date(completion.completed_at)
-      expectedDate.setHours(expectedHour, expectedMin, 0, 0)
-
-      if (completedDate > expectedDate) {
-        lateCount++
-      }
-    } else if (!completion && task.expected_time) {
-      // Check if it's past expected time right now
-      const now = new Date()
-      const expectedHour = parseInt(task.expected_time.split(':')[0], 10)
-      const expectedMin = parseInt(task.expected_time.split(':')[1], 10)
-      const expectedDate = new Date()
-      expectedDate.setHours(expectedHour, expectedMin, 0, 0)
-
-      if (now > expectedDate) {
-        lateCount++
-      }
-    }
-  })
-
-  const categoryLabels: Record<string, string> = {
-    Opening: 'Abertura',
-    Shift: 'Turno',
-    Closing: 'Fechamento',
   }
 
   return (
@@ -99,7 +125,7 @@ export default function Reports() {
             Relatório de Performance
           </h1>
           <p className="text-muted-foreground mt-1">
-            Acompanhamento da execução da rotina da academia hoje.
+            Acompanhamento da execução e pontualidade da rotina.
           </p>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border">
@@ -112,88 +138,14 @@ export default function Reports() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-border/60 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-5">
-            <Activity className="w-24 h-24" />
-          </div>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Progresso do Dia
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline gap-2 mb-2">
-              <span className="text-3xl font-bold tracking-tighter">{progress}%</span>
-              <span className="text-sm font-medium text-muted-foreground">Concluído</span>
-            </div>
-            <Progress value={progress} className="h-2" />
-            <p className="text-xs text-muted-foreground mt-3 font-medium">
-              {completedCount} de {totalCount} tarefas finalizadas
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/60 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-5">
-            <CheckCircle2 className="w-24 h-24" />
-          </div>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Status Atual
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold tracking-tighter">
-                {totalCount - completedCount}
-              </span>
-              <span className="text-sm font-medium text-muted-foreground">Pendentes</span>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {['Opening', 'Shift', 'Closing'].map((cat) => {
-                const total = tasks.filter((t) => t.category === cat).length
-                const comp = completions.filter(
-                  (c) => tasks.find((t) => t.id === c.task_id)?.category === cat,
-                ).length
-                if (total === 0) return null
-                return (
-                  <Badge key={cat} variant="secondary" className="text-[10px]">
-                    {categoryLabels[cat]}: {comp}/{total}
-                  </Badge>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/60 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-5 text-orange-600">
-            <AlertTriangle className="w-24 h-24" />
-          </div>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Atenção</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline gap-2">
-              <span
-                className={cn(
-                  'text-3xl font-bold tracking-tighter',
-                  lateCount > 0 ? 'text-orange-600' : 'text-green-600',
-                )}
-              >
-                {lateCount}
-              </span>
-              <span className="text-sm font-medium text-muted-foreground">Tarefas Atrasadas</span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-4 font-medium">
-              {lateCount === 0
-                ? 'Rotina dentro do horário esperado.'
-                : 'Atenção aos horários limite das tarefas.'}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <PunctualityCards
+        progress={stats.progress}
+        onTimeRate={stats.onTimeRate}
+        delayedCount={stats.delayedCount}
+        pendingCount={stats.pendingCount}
+        totalCompleted={stats.completedCount}
+        totalTasks={stats.totalTasks}
+      />
 
       <Card className="shadow-sm border-border/60">
         <CardHeader className="border-b bg-muted/10 pb-4">
@@ -214,46 +166,35 @@ export default function Reports() {
               {tasks.map((task) => {
                 const completion = completions.find((c) => c.task_id === task.id)
                 const isCompleted = !!completion
-
-                let isLate = false
-                if (isCompleted && task.expected_time) {
-                  const completedDate = new Date(completion.completed_at)
-                  const expectedHour = parseInt(task.expected_time.split(':')[0], 10)
-                  const expectedMin = parseInt(task.expected_time.split(':')[1], 10)
-
-                  const expectedDate = new Date(completion.completed_at)
-                  expectedDate.setHours(expectedHour, expectedMin, 0, 0)
-
-                  if (completedDate > expectedDate) {
-                    isLate = true
-                  }
-                } else if (!isCompleted && task.expected_time) {
-                  const now = new Date()
-                  const expectedHour = parseInt(task.expected_time.split(':')[0], 10)
-                  const expectedMin = parseInt(task.expected_time.split(':')[1], 10)
-                  const expectedDate = new Date()
-                  expectedDate.setHours(expectedHour, expectedMin, 0, 0)
-
-                  if (now > expectedDate) {
-                    isLate = true
-                  }
-                }
-
+                const completedLate =
+                  isCompleted && wasCompletedLate(completion!.completed_at, task.expected_time)
+                const overdue = !isCompleted && isTaskOverdue(task.expected_time, false)
                 return (
                   <TableRow key={task.id} className="hover:bg-muted/30">
                     <TableCell className="pl-6">
                       <div className="font-medium text-foreground">{task.title}</div>
                       <div className="text-xs text-muted-foreground mt-0.5">
-                        {categoryLabels[task.category]}
+                        {CATEGORY_LABELS[task.category] || task.category}
                       </div>
                     </TableCell>
                     <TableCell>
                       {isCompleted ? (
                         <Badge
                           variant="outline"
-                          className="bg-primary/5 text-primary border-primary/20"
+                          className={
+                            completedLate
+                              ? 'bg-orange-50 text-orange-700 border-orange-200'
+                              : 'bg-primary/5 text-primary border-primary/20'
+                          }
                         >
-                          Concluído
+                          {completedLate ? 'Concluída com Atraso' : 'Concluído'}
+                        </Badge>
+                      ) : overdue ? (
+                        <Badge
+                          variant="outline"
+                          className="bg-destructive/5 text-destructive border-destructive/20"
+                        >
+                          Atrasada
                         </Badge>
                       ) : (
                         <Badge
@@ -275,30 +216,16 @@ export default function Reports() {
                     </TableCell>
                     <TableCell className="text-right pr-6">
                       {isCompleted ? (
-                        <div className="flex flex-col items-end gap-1">
-                          <span className="text-sm font-medium">
-                            {new Date(completion.completed_at).toLocaleTimeString('pt-BR', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                          {isLate && (
-                            <span className="text-[10px] font-semibold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">
-                              Atrasado
-                            </span>
-                          )}
-                        </div>
+                        <span className="text-sm font-medium">
+                          {new Date(completion.completed_at).toLocaleTimeString('pt-BR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
                       ) : task.expected_time ? (
-                        <div className="flex flex-col items-end gap-1">
-                          <span className="text-xs text-muted-foreground">
-                            Até {task.expected_time.slice(0, 5)}
-                          </span>
-                          {isLate && (
-                            <span className="text-[10px] font-semibold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">
-                              Atrasado
-                            </span>
-                          )}
-                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          Até {task.expected_time.slice(0, 5)}
+                        </span>
                       ) : (
                         <span className="text-sm text-muted-foreground">-</span>
                       )}
@@ -317,6 +244,8 @@ export default function Reports() {
           </Table>
         </CardContent>
       </Card>
+
+      <DelayedTasksList stats={stats.frequentlyDelayed} />
     </div>
   )
 }
