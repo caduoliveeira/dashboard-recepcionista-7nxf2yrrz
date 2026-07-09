@@ -3,23 +3,33 @@ import {
   fetchTasks,
   fetchTodayCompletions,
   markTaskComplete,
-  Task,
-  TaskCompletion,
+  type Task,
+  type TaskCompletion,
 } from '@/services/tasks'
 import { useAuth } from '@/hooks/use-auth'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CheckCircle2, Circle, Clock } from 'lucide-react'
+import { CheckCircle2, Clock, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
+import { TaskCreationModal } from '@/components/task-creation-modal'
+import { ChecklistTaskItem } from '@/components/checklist-task-item'
+
+const KNOWN_ORDER = ['Opening', 'Shift', 'Closing']
+const KNOWN_LABELS: Record<string, string> = {
+  Opening: 'Abertura',
+  Shift: 'Turno',
+  Closing: 'Fechamento',
+}
 
 export default function Checklist() {
-  const { user } = useAuth()
+  const { user, role } = useAuth()
   const [tasks, setTasks] = useState<Task[]>([])
   const [completions, setCompletions] = useState<TaskCompletion[]>([])
   const [loading, setLoading] = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -29,7 +39,6 @@ export default function Checklist() {
   const loadData = async () => {
     setLoading(true)
     const [tasksRes, completionsRes] = await Promise.all([fetchTasks(), fetchTodayCompletions()])
-
     if (tasksRes.data) setTasks(tasksRes.data)
     if (completionsRes.data) setCompletions(completionsRes.data)
     setLoading(false)
@@ -55,10 +64,7 @@ export default function Checklist() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div>
-          <Skeleton className="h-10 w-64 mb-2" />
-          <Skeleton className="h-5 w-96" />
-        </div>
+        <Skeleton className="h-10 w-64 mb-2" />
         <div className="grid gap-6 md:grid-cols-3">
           <Skeleton className="h-[400px] rounded-xl" />
           <Skeleton className="h-[400px] rounded-xl" />
@@ -68,12 +74,12 @@ export default function Checklist() {
     )
   }
 
-  const categories = ['Opening', 'Shift', 'Closing']
-  const categoryLabels: Record<string, string> = {
-    Opening: 'Abertura',
-    Shift: 'Turno',
-    Closing: 'Fechamento',
-  }
+  const allCats = Array.from(new Set(tasks.map((t) => t.category)))
+  const categories = [
+    ...KNOWN_ORDER.filter((c) => allCats.includes(c)),
+    ...allCats.filter((c) => !KNOWN_ORDER.includes(c)).sort(),
+  ]
+  const getLabel = (cat: string) => KNOWN_LABELS[cat] || cat
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -84,13 +90,21 @@ export default function Checklist() {
             Marque as tarefas conforme forem concluídas na sua rotina.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border">
-          <Clock className="h-4 w-4" />
-          {new Date().toLocaleDateString('pt-BR', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          })}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border">
+            <Clock className="h-4 w-4" />
+            {new Date().toLocaleDateString('pt-BR', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+            })}
+          </div>
+          {role === 'owner' && (
+            <Button onClick={() => setModalOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Tarefa
+            </Button>
+          )}
         </div>
       </div>
 
@@ -116,7 +130,7 @@ export default function Checklist() {
                 <CardTitle className="text-lg font-semibold flex items-center justify-between">
                   <span className="flex items-center gap-2">
                     {isAllCompleted && <CheckCircle2 className="h-5 w-5 text-primary" />}
-                    {categoryLabels[category]}
+                    {getLabel(category)}
                   </span>
                   <Badge
                     variant={isAllCompleted ? 'default' : 'secondary'}
@@ -128,86 +142,22 @@ export default function Checklist() {
               </CardHeader>
               <CardContent className="p-0">
                 <ul className="divide-y">
-                  {catTasks.map((task) => {
-                    const completion = completions.find((c) => c.task_id === task.id)
-                    const isCompleted = !!completion
-
-                    return (
-                      <li
-                        key={task.id}
-                        className={cn(
-                          'p-4 transition-colors',
-                          isCompleted ? 'bg-card/50' : 'hover:bg-muted/30',
-                        )}
-                      >
-                        <div className="flex items-start gap-4">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleComplete(task.id)}
-                            disabled={isCompleted}
-                            className={cn(
-                              'h-8 w-8 mt-0.5 shrink-0 transition-all rounded-full',
-                              isCompleted
-                                ? 'text-primary hover:text-primary cursor-default opacity-100'
-                                : 'text-muted-foreground hover:text-primary hover:bg-primary/10',
-                            )}
-                          >
-                            {isCompleted ? (
-                              <CheckCircle2 className="h-7 w-7" />
-                            ) : (
-                              <Circle className="h-7 w-7 stroke-[1.5]" />
-                            )}
-                          </Button>
-                          <div className="space-y-1.5 flex-1 pt-1">
-                            <p
-                              className={cn(
-                                'font-medium text-[15px] leading-tight transition-all',
-                                isCompleted
-                                  ? 'text-muted-foreground line-through decoration-muted-foreground/30'
-                                  : 'text-foreground',
-                              )}
-                            >
-                              {task.title}
-                            </p>
-                            {task.description && (
-                              <p
-                                className={cn(
-                                  'text-sm transition-all',
-                                  isCompleted
-                                    ? 'text-muted-foreground/60'
-                                    : 'text-muted-foreground',
-                                )}
-                              >
-                                {task.description}
-                              </p>
-                            )}
-                            {task.expected_time && !isCompleted && (
-                              <div className="flex items-center text-[11px] font-medium text-orange-600/80 bg-orange-50 w-fit px-1.5 py-0.5 rounded border border-orange-100 mt-2">
-                                <Clock className="h-3 w-3 mr-1" />
-                                Esperado até: {task.expected_time.slice(0, 5)}
-                              </div>
-                            )}
-                            {isCompleted && (
-                              <div className="flex items-center gap-1.5 text-[11px] text-primary/80 font-medium mt-2 bg-primary/5 w-fit px-2 py-0.5 rounded-full border border-primary/10">
-                                ✓ Concluído às{' '}
-                                {new Date(completion.completed_at).toLocaleTimeString('pt-BR', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </li>
-                    )
-                  })}
+                  {catTasks.map((task) => (
+                    <ChecklistTaskItem
+                      key={task.id}
+                      task={task}
+                      completion={completions.find((c) => c.task_id === task.id)}
+                      onComplete={handleComplete}
+                    />
+                  ))}
                 </ul>
               </CardContent>
             </Card>
           )
         })}
       </div>
+
+      <TaskCreationModal open={modalOpen} onOpenChange={setModalOpen} onTaskCreated={loadData} />
     </div>
   )
 }

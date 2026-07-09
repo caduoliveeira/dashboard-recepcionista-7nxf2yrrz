@@ -1,0 +1,3 @@
+ALTER TABLE public.tasks ADD COLUMN IF NOT EXISTS is_recurring BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE public.tasks ADD COLUMN IF NOT EXISTS recurrence_type TEXT;
+ALTER TABLE public.tasks ADD COLUMN IF NOT EXISTS recurrence_days TEXT[];

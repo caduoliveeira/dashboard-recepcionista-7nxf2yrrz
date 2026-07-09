@@ -7,6 +7,9 @@ export type Task = {
   category: string
   expected_time: string | null
   is_active: boolean
+  is_recurring: boolean
+  recurrence_type: string | null
+  recurrence_days: string[] | null
 }
 
 export type TaskCompletion = {
@@ -20,13 +23,35 @@ export type TaskCompletion = {
   } | null
 }
 
+export type CreateTaskInput = {
+  title: string
+  description?: string | null
+  category: string
+  expected_time?: string | null
+  is_recurring: boolean
+  recurrence_type?: string | null
+  recurrence_days?: string[] | null
+}
+
+const formatTime = (time: string | null | undefined): string | null => {
+  if (!time) return null
+  return time.length === 5 ? `${time}:00` : time
+}
+
 export const fetchTasks = async () => {
   const { data, error } = await supabase
     .from('tasks')
     .select('*')
     .eq('is_active', true)
     .order('expected_time', { ascending: true })
-  return { data: data as Task[], error }
+  return { data: (data as unknown as Task[]) || [], error }
+}
+
+export const fetchCategories = async () => {
+  const { data, error } = await supabase.from('tasks').select('category').eq('is_active', true)
+  if (error || !data) return { data: [] as string[], error }
+  const categories = [...new Set(data.map((t: { category: string }) => t.category))]
+  return { data: categories, error: null }
 }
 
 export const fetchTodayCompletions = async () => {
@@ -41,7 +66,7 @@ export const fetchTodayCompletions = async () => {
     `)
     .gte('completed_at', today.toISOString())
 
-  const formattedData = (data || []).map((item) => ({
+  const formattedData = (data || []).map((item: any) => ({
     ...item,
     profiles: Array.isArray(item.profiles) ? item.profiles[0] : item.profiles,
   })) as TaskCompletion[]
@@ -67,4 +92,28 @@ export const markTaskComplete = async (taskId: string, userId: string) => {
     : null
 
   return { data: formattedData, error }
+}
+
+export const createTask = async (input: CreateTaskInput) => {
+  const payload = {
+    title: input.title,
+    description: input.description || null,
+    category: input.category,
+    expected_time: formatTime(input.expected_time),
+    is_active: true,
+    is_recurring: input.is_recurring,
+    recurrence_type: input.is_recurring ? (input.recurrence_type ?? null) : null,
+    recurrence_days:
+      input.is_recurring && input.recurrence_type === 'weekly'
+        ? (input.recurrence_days ?? null)
+        : null,
+  }
+
+  const { data, error } = await supabase
+    .from('tasks')
+    .insert([payload] as any)
+    .select('*')
+    .single()
+
+  return { data: data as unknown as Task | null, error }
 }
