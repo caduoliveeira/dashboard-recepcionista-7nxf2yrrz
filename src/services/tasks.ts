@@ -5,6 +5,7 @@ export type Task = {
   title: string
   description: string | null
   category: string
+  category_id: string | null
   expected_time: string | null
   is_active: boolean
   is_recurring: boolean
@@ -45,6 +46,7 @@ export type CreateTaskInput = {
   title: string
   description?: string | null
   category: string
+  category_id?: string | null
   expected_time?: string | null
   is_recurring: boolean
   recurrence_type?: string | null
@@ -142,6 +144,7 @@ export const createTask = async (input: CreateTaskInput) => {
     title: input.title,
     description: input.description || null,
     category: input.category,
+    category_id: input.category_id || null,
     expected_time: formatTime(input.expected_time),
     is_active: true,
     is_recurring: input.is_recurring,
@@ -160,4 +163,38 @@ export const createTask = async (input: CreateTaskInput) => {
     .single()
 
   return { data: data as unknown as Task | null, error }
+}
+
+export type ActivityItem = {
+  id: string
+  completed_at: string
+  task_title: string | null
+  full_name: string | null
+}
+
+export const fetchTodayActivity = async () => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const { data, error } = await supabase
+    .from('task_completions')
+    .select(`
+      id, completed_at,
+      tasks ( title ),
+      profiles ( full_name )
+    `)
+    .gte('completed_at', today.toISOString())
+    .order('completed_at', { ascending: false })
+    .limit(15)
+
+  const formatted = (data || []).map((item: any) => ({
+    id: item.id,
+    completed_at: item.completed_at,
+    task_title: Array.isArray(item.tasks) ? item.tasks[0]?.title : item.tasks?.title,
+    full_name: Array.isArray(item.profiles)
+      ? item.profiles[0]?.full_name
+      : item.profiles?.full_name,
+  })) as ActivityItem[]
+
+  return { data: formatted, error }
 }

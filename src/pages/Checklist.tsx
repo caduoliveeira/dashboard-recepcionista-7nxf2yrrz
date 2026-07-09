@@ -3,12 +3,19 @@ import {
   fetchTasks,
   fetchTodayCompletions,
   markTaskComplete,
+  fetchTodayActivity,
   type Task,
   type TaskCompletion,
+  type ActivityItem,
 } from '@/services/tasks'
+import {
+  fetchCategories as fetchTaskCategories,
+  type TaskCategory,
+} from '@/services/task-categories'
 import { useAuth } from '@/hooks/use-auth'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 import { CheckCircle2, Clock, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
@@ -17,19 +24,22 @@ import { Badge } from '@/components/ui/badge'
 import { TaskCreationModal } from '@/components/task-creation-modal'
 import { ChecklistTaskItem } from '@/components/checklist-task-item'
 import { ChecklistFilterBar } from '@/components/checklist-filter-bar'
+import { ActivityFeed } from '@/components/activity-feed'
+import { ShiftHandoverNotes } from '@/components/shift-handover-notes'
 import { shouldShowTask, type FilterType } from '@/lib/task-utils'
 
-const KNOWN_ORDER = ['Opening', 'Shift', 'Closing']
-const KNOWN_LABELS: Record<string, string> = {
-  Opening: 'Abertura',
-  Shift: 'Turno',
-  Closing: 'Fechamento',
+const formatTimeRange = (start: string | null, end: string | null) => {
+  if (!start && !end) return ''
+  const fmt = (t: string | null) => (t ? t.substring(0, 5) : '')
+  return `(${fmt(start)} - ${fmt(end)})`
 }
 
 export default function Checklist() {
   const { user, role } = useAuth()
   const [tasks, setTasks] = useState<Task[]>([])
+  const [categories, setCategories] = useState<TaskCategory[]>([])
   const [completions, setCompletions] = useState<TaskCompletion[]>([])
+  const [activity, setActivity] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
@@ -47,9 +57,16 @@ export default function Checklist() {
 
   const loadData = async () => {
     setLoading(true)
-    const [tasksRes, completionsRes] = await Promise.all([fetchTasks(), fetchTodayCompletions()])
+    const [tasksRes, catsRes, completionsRes, activityRes] = await Promise.all([
+      fetchTasks(),
+      fetchTaskCategories(),
+      fetchTodayCompletions(),
+      fetchTodayActivity(),
+    ])
     if (tasksRes.data) setTasks(tasksRes.data)
+    if (catsRes.data) setCategories(catsRes.data)
     if (completionsRes.data) setCompletions(completionsRes.data)
+    if (activityRes.data) setActivity(activityRes.data)
     setLoading(false)
   }
 
@@ -66,6 +83,9 @@ export default function Checklist() {
     }
     if (data) {
       setCompletions((prev) => [...prev, data])
+      fetchTodayActivity().then(({ data: act }) => {
+        if (act) setActivity(act)
+      })
       toast({ title: 'Sucesso', description: 'Tarefa concluída!' })
     }
   }
@@ -89,6 +109,18 @@ export default function Checklist() {
     [tasks, completedIds, filter],
   )
 
+  const columns = useMemo(() => {
+    const cols = categories.map((cat) => ({
+      category: cat,
+      catTasks: filteredTasks.filter((t) => t.category_id === cat.id),
+    }))
+    const uncategorized = filteredTasks.filter((t) => !t.category_id)
+    if (uncategorized.length > 0) {
+      cols.push({ category: null, catTasks: uncategorized })
+    }
+    return cols
+  }, [categories, filteredTasks])
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -102,13 +134,6 @@ export default function Checklist() {
       </div>
     )
   }
-
-  const allCats = Array.from(new Set(filteredTasks.map((t) => t.category)))
-  const categories = [
-    ...KNOWN_ORDER.filter((c) => allCats.includes(c)),
-    ...allCats.filter((c) => !KNOWN_ORDER.includes(c)).sort(),
-  ]
-  const getLabel = (cat: string) => KNOWN_LABELS[cat] || cat
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -145,49 +170,61 @@ export default function Checklist() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-3 items-start">
-          {categories.map((category) => {
-            const catTasks = filteredTasks.filter((t) => t.category === category)
-            if (catTasks.length === 0) return null
-            const completedCount = catTasks.filter((t) => completedIds.has(t.id)).length
-            const isAllCompleted = completedCount === catTasks.length && catTasks.length > 0
-            return (
-              <Card
-                key={category}
-                className={cn(
-                  'shadow-sm transition-all duration-300',
-                  isAllCompleted && 'border-primary/50 bg-primary/5',
-                )}
-              >
-                <CardHeader className="border-b bg-card pb-4">
-                  <CardTitle className="text-lg font-semibold flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      {isAllCompleted && <CheckCircle2 className="h-5 w-5 text-primary" />}
-                      {getLabel(category)}
-                    </span>
-                    <Badge
-                      variant={isAllCompleted ? 'default' : 'secondary'}
-                      className={cn('ml-auto', isAllCompleted && 'bg-primary')}
-                    >
-                      {completedCount} / {catTasks.length}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <ul className="divide-y">
-                    {catTasks.map((task) => (
-                      <ChecklistTaskItem
-                        key={task.id}
-                        task={task}
-                        completion={completions.find((c) => c.task_id === task.id)}
-                        onComplete={handleComplete}
-                      />
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            )
-          })}
+        <div className="flex gap-6">
+          <div className="flex-1 grid gap-6 md:grid-cols-2 xl:grid-cols-3 items-start">
+            {columns.map((col) => {
+              const completedCount = col.catTasks.filter((t) => completedIds.has(t.id)).length
+              const total = col.catTasks.length
+              const isAllCompleted = total > 0 && completedCount === total
+              const progress = total > 0 ? (completedCount / total) * 100 : 0
+              return (
+                <Card
+                  key={col.category?.id || 'general'}
+                  className={cn(
+                    'shadow-sm transition-all duration-300',
+                    isAllCompleted && 'border-primary/50 bg-primary/5',
+                  )}
+                >
+                  <CardHeader className="border-b bg-card pb-4 space-y-2">
+                    <CardTitle className="text-lg font-semibold flex items-center justify-between">
+                      <span className="flex items-center gap-2 flex-wrap">
+                        {isAllCompleted && <CheckCircle2 className="h-5 w-5 text-primary" />}
+                        {col.category ? col.category.name : 'Geral'}
+                        {col.category && (
+                          <span className="text-xs font-normal text-muted-foreground">
+                            {formatTimeRange(col.category.start_time, col.category.end_time)}
+                          </span>
+                        )}
+                      </span>
+                      <Badge
+                        variant={isAllCompleted ? 'default' : 'secondary'}
+                        className={cn('ml-auto', isAllCompleted && 'bg-primary')}
+                      >
+                        {completedCount} / {total}
+                      </Badge>
+                    </CardTitle>
+                    {total > 0 && <Progress value={progress} className="h-1.5" />}
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <ul className="divide-y">
+                      {col.catTasks.map((task) => (
+                        <ChecklistTaskItem
+                          key={task.id}
+                          task={task}
+                          completion={completions.find((c) => c.task_id === task.id)}
+                          onComplete={handleComplete}
+                        />
+                      ))}
+                    </ul>
+                    {col.category && (
+                      <ShiftHandoverNotes categoryId={col.category.id} userId={user?.id} />
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+          <ActivityFeed items={activity} />
         </div>
       )}
 

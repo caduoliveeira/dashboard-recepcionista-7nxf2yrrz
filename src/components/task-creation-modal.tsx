@@ -17,19 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command'
 import { cn } from '@/lib/utils'
-import { Check, ChevronsUpDown } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { createTask, fetchCategories } from '@/services/tasks'
+import { createTask } from '@/services/tasks'
+import { fetchCategories, type TaskCategory } from '@/services/task-categories'
 
 const WEEK_DAYS = [
   { value: 'monday', label: 'Seg' },
@@ -51,9 +42,8 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
   const { toast } = useToast()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('')
-  const [catOpen, setCatOpen] = useState(false)
-  const [existingCats, setExistingCats] = useState<string[]>([])
+  const [categoryId, setCategoryId] = useState('')
+  const [categories, setCategories] = useState<TaskCategory[]>([])
   const [mode, setMode] = useState<'specific' | 'recurring'>('specific')
   const [freq, setFreq] = useState<'daily' | 'weekly'>('daily')
   const [days, setDays] = useState<string[]>([])
@@ -64,7 +54,7 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
   useEffect(() => {
     if (open) {
       fetchCategories().then(({ data }) => {
-        if (data) setExistingCats(data)
+        if (data) setCategories(data)
       })
     }
   }, [open])
@@ -72,7 +62,7 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
   const reset = () => {
     setTitle('')
     setDescription('')
-    setCategory('')
+    setCategoryId('')
     setMode('specific')
     setFreq('daily')
     setDays([])
@@ -92,7 +82,7 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
       })
       return
     }
-    if (!category.trim()) {
+    if (!categoryId) {
       toast({
         title: 'Campo obrigatório',
         description: 'A categoria é obrigatória.',
@@ -109,11 +99,13 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
       return
     }
 
+    const selectedCat = categories.find((c) => c.id === categoryId)
     setSaving(true)
     const { error } = await createTask({
       title: title.trim(),
       description: description.trim() || null,
-      category: category.trim(),
+      category: selectedCat?.name || 'General',
+      category_id: categoryId,
       expected_time: time || null,
       is_recurring: mode === 'recurring',
       recurrence_type: mode === 'recurring' ? freq : null,
@@ -169,57 +161,19 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
             />
           </div>
           <div className="space-y-2">
-            <Label>Categoria *</Label>
-            <Popover open={catOpen} onOpenChange={setCatOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  className="w-full justify-between font-normal"
-                >
-                  {category || 'Selecione ou digite...'}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="p-0 min-w-[300px]" align="start">
-                <Command>
-                  <CommandInput
-                    placeholder="Buscar ou criar categoria..."
-                    value={category}
-                    onValueChange={setCategory}
-                  />
-                  <CommandList>
-                    <CommandEmpty>
-                      {category.trim()
-                        ? `"${category.trim()}" — nova categoria`
-                        : 'Digite um nome...'}
-                    </CommandEmpty>
-                    {existingCats.length > 0 && (
-                      <CommandGroup heading="Existentes">
-                        {existingCats.map((cat) => (
-                          <CommandItem
-                            key={cat}
-                            value={cat}
-                            onSelect={() => {
-                              setCategory(cat)
-                              setCatOpen(false)
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                'mr-2 h-4 w-4',
-                                category === cat ? 'opacity-100' : 'opacity-0',
-                              )}
-                            />
-                            {cat}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <Label>Categoria (Turno) *</Label>
+            <Select value={categoryId} onValueChange={setCategoryId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o turno..." />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="t-time">Horário Previsto</Label>

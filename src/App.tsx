@@ -6,6 +6,8 @@ import Index from './pages/Index'
 import Checklist from './pages/Checklist'
 import Reports from './pages/Reports'
 import Login from './pages/Login'
+import Signup from './pages/Signup'
+import ShiftManagement from './pages/ShiftManagement'
 import NotFound from './pages/NotFound'
 import Inventory from './pages/Inventory'
 import Maintenance from './pages/Maintenance'
@@ -22,9 +24,11 @@ const App = () => (
         <Sonner />
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/auth/signup" element={<Signup />} />
           <Route element={<Layout />}>
             <Route path="/" element={<Index />} />
             <Route path="/checklist" element={<Checklist />} />
+            <Route path="/shifts" element={<ShiftManagement />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/maintenance" element={<Maintenance />} />
             <Route path="/shopping" element={<Shopping />} />

@@ -10,6 +10,7 @@ import {
   Wrench,
   ShoppingCart,
   LifeBuoy,
+  Clock,
 } from 'lucide-react'
 import { NotificationBell } from '@/components/notification-bell'
 import { cn } from '@/lib/utils'
@@ -38,6 +39,7 @@ export default function Layout() {
     { name: 'Manutenção', href: '/maintenance', icon: Wrench, show: true },
     { name: 'Mercado', href: '/shopping', icon: ShoppingCart, show: true },
     { name: 'Emergência', href: '/emergency', icon: LifeBuoy, show: true },
+    { name: 'Turnos', href: '/shifts', icon: Clock, show: role === 'owner' },
     { name: 'Relatórios', href: '/reports', icon: BarChart, show: role === 'owner' },
   ].filter((n) => n.show)
 
