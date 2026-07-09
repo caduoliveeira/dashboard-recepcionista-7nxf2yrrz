@@ -9,6 +9,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      gym_settings: {
+        Row: {
+          id: string
+          target_completion_rate: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          target_completion_rate?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          target_completion_rate?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

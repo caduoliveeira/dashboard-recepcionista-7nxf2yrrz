@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button'
 import { fetchGymSettings } from '@/services/settings'
 import { PerformanceGauge } from '@/components/performance-gauge'
 import { GoalSettingsModal } from '@/components/goal-settings-modal'
+import { YesterdayPerformance } from '@/components/yesterday-performance'
 
 const CATEGORY_LABELS: Record<string, string> = {
   Opening: 'Abertura',
@@ -151,6 +152,8 @@ export default function Index() {
         totalCompleted={stats.completedCount}
         totalTasks={stats.totalTasks}
       />
+
+      <YesterdayPerformance />
 
       <PerformanceGauge actualRate={stats.onTimeRate} targetRate={targetRate} />
 

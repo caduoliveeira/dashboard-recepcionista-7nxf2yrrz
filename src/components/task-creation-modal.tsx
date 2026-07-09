@@ -58,6 +58,7 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
   const [freq, setFreq] = useState<'daily' | 'weekly'>('daily')
   const [days, setDays] = useState<string[]>([])
   const [time, setTime] = useState('')
+  const [priority, setPriority] = useState('Medium')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -76,6 +77,7 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
     setFreq('daily')
     setDays([])
     setTime('')
+    setPriority('Medium')
   }
 
   const toggleDay = (d: string) =>
@@ -116,6 +118,7 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
       is_recurring: mode === 'recurring',
       recurrence_type: mode === 'recurring' ? freq : null,
       recurrence_days: mode === 'recurring' && freq === 'weekly' ? days : null,
+      priority,
     })
     setSaving(false)
 
@@ -221,6 +224,19 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
           <div className="space-y-2">
             <Label htmlFor="t-time">Horário Previsto</Label>
             <Input id="t-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Prioridade</Label>
+            <Select value={priority} onValueChange={setPriority}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="High">Alta</SelectItem>
+                <SelectItem value="Medium">Média</SelectItem>
+                <SelectItem value="Low">Baixa</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-3">
             <Label>Recorrência</Label>

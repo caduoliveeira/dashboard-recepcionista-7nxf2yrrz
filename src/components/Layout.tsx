@@ -1,6 +1,17 @@
 import { Outlet, Navigate, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
-import { LogOut, CheckSquare, BarChart, Home, Activity } from 'lucide-react'
+import {
+  LogOut,
+  CheckSquare,
+  BarChart,
+  Home,
+  Activity,
+  Package,
+  Wrench,
+  ShoppingCart,
+  LifeBuoy,
+} from 'lucide-react'
+import { NotificationBell } from '@/components/notification-bell'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
@@ -23,6 +34,10 @@ export default function Layout() {
   const navigation = [
     { name: 'Início', href: '/', icon: Home, show: role === 'owner' },
     { name: 'Checklist', href: '/checklist', icon: CheckSquare, show: true },
+    { name: 'Estoque', href: '/inventory', icon: Package, show: true },
+    { name: 'Manutenção', href: '/maintenance', icon: Wrench, show: true },
+    { name: 'Mercado', href: '/shopping', icon: ShoppingCart, show: true },
+    { name: 'Emergência', href: '/emergency', icon: LifeBuoy, show: true },
     { name: 'Relatórios', href: '/reports', icon: BarChart, show: role === 'owner' },
   ].filter((n) => n.show)
 
@@ -63,6 +78,7 @@ export default function Layout() {
                 {role === 'owner' ? 'Proprietário' : 'Recepcionista'}
               </p>
             </div>
+            {role === 'owner' && <NotificationBell />}
           </div>
           <Button
             variant="ghost"
@@ -88,6 +104,7 @@ export default function Layout() {
                 </div>
                 <span className="text-xl font-bold text-foreground tracking-tight">TRoutineG</span>
               </div>
+              {role === 'owner' && <NotificationBell />}
               <Button
                 variant="ghost"
                 size="sm"

@@ -10,6 +10,7 @@ export type Task = {
   is_recurring: boolean
   recurrence_type: string | null
   recurrence_days: string[] | null
+  priority: string
 }
 
 export type TaskCompletion = {
@@ -48,6 +49,7 @@ export type CreateTaskInput = {
   is_recurring: boolean
   recurrence_type?: string | null
   recurrence_days?: string[] | null
+  priority?: string
 }
 
 const formatTime = (time: string | null | undefined): string | null => {
@@ -148,6 +150,7 @@ export const createTask = async (input: CreateTaskInput) => {
       input.is_recurring && input.recurrence_type === 'weekly'
         ? (input.recurrence_days ?? null)
         : null,
+    priority: input.priority || 'Medium',
   }
 
   const { data, error } = await supabase
