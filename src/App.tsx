@@ -5,24 +5,29 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import Index from './pages/Index'
 import Checklist from './pages/Checklist'
 import Reports from './pages/Reports'
+import Login from './pages/Login'
 import NotFound from './pages/NotFound'
 import Layout from './components/Layout'
+import { AuthProvider } from '@/hooks/use-auth'
 
 const App = () => (
-  <BrowserRouter>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <Routes>
-        <Route element={<Layout />}>
-          <Route path="/" element={<Index />} />
-          <Route path="/checklist" element={<Checklist />} />
-          <Route path="/reports" element={<Reports />} />
-        </Route>
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </TooltipProvider>
-  </BrowserRouter>
+  <AuthProvider>
+    <BrowserRouter>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route element={<Layout />}>
+            <Route path="/" element={<Index />} />
+            <Route path="/checklist" element={<Checklist />} />
+            <Route path="/reports" element={<Reports />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </TooltipProvider>
+    </BrowserRouter>
+  </AuthProvider>
 )
 
 export default App

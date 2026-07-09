@@ -1,183 +1,322 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-import { Button } from '@/components/ui/button'
-import { Download, TrendingUp, AlertTriangle } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { useState, useEffect } from 'react'
+import { fetchTasks, fetchTodayCompletions, Task, TaskCompletion } from '@/services/tasks'
+import { useAuth } from '@/hooks/use-auth'
+import { Navigate } from 'react-router-dom'
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Skeleton } from '@/components/ui/skeleton'
+import { CheckCircle2, Clock, AlertTriangle, Activity } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
 export default function Reports() {
-  const { toast } = useToast()
+  const { role } = useAuth()
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [completions, setCompletions] = useState<TaskCompletion[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const efficiencyData = [
-    { name: 'Abertura', estimated: 30, actual: 25 },
-    { name: 'Manhã', estimated: 120, actual: 135 },
-    { name: 'Troca', estimated: 45, actual: 40 },
-    { name: 'Tarde', estimated: 180, actual: 190 },
-    { name: 'Fecho', estimated: 60, actual: 75 },
-  ]
+  useEffect(() => {
+    loadData()
+  }, [])
 
-  const errorHeatmapData = [
-    { task: 'Relatórios de Turno', count: 15, label: 'Crítico' },
-    { task: 'Agendamentos', count: 12, label: 'Alto' },
-    { task: 'Correspondências', count: 8, label: 'Médio' },
-    { task: 'Confirmações', count: 5, label: 'Baixo' },
-    { task: 'Fundo de Caixa', count: 2, label: 'Baixo' },
-  ]
+  const loadData = async () => {
+    setLoading(true)
+    const [tasksRes, completionsRes] = await Promise.all([fetchTasks(), fetchTodayCompletions()])
+    if (tasksRes.data) setTasks(tasksRes.data)
+    if (completionsRes.data) setCompletions(completionsRes.data)
+    setLoading(false)
+  }
 
-  const handleExport = () => {
-    toast({
-      title: 'Gerando PDF',
-      description: 'O relatório semanal está sendo preparado para download.',
-    })
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-10 w-64 mb-2" />
+          <Skeleton className="h-5 w-96" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+        </div>
+        <Skeleton className="h-[400px]" />
+      </div>
+    )
+  }
+
+  const completedCount = completions.length
+  const totalCount = tasks.length
+  const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+
+  // Calculate late tasks
+  let lateCount = 0
+  tasks.forEach((task) => {
+    const completion = completions.find((c) => c.task_id === task.id)
+    if (completion && task.expected_time) {
+      const completedDate = new Date(completion.completed_at)
+      const expectedHour = parseInt(task.expected_time.split(':')[0], 10)
+      const expectedMin = parseInt(task.expected_time.split(':')[1], 10)
+
+      const expectedDate = new Date(completion.completed_at)
+      expectedDate.setHours(expectedHour, expectedMin, 0, 0)
+
+      if (completedDate > expectedDate) {
+        lateCount++
+      }
+    } else if (!completion && task.expected_time) {
+      // Check if it's past expected time right now
+      const now = new Date()
+      const expectedHour = parseInt(task.expected_time.split(':')[0], 10)
+      const expectedMin = parseInt(task.expected_time.split(':')[1], 10)
+      const expectedDate = new Date()
+      expectedDate.setHours(expectedHour, expectedMin, 0, 0)
+
+      if (now > expectedDate) {
+        lateCount++
+      }
+    }
+  })
+
+  const categoryLabels: Record<string, string> = {
+    Opening: 'Abertura',
+    Shift: 'Turno',
+    Closing: 'Fechamento',
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-10">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Relatórios de Desempenho
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Relatório de Performance
           </h1>
-          <p className="text-slate-500 mt-1 text-sm">
-            Análise de eficiência e mapa de calor de incidentes.
+          <p className="text-muted-foreground mt-1">
+            Acompanhamento da execução da rotina da academia hoje.
           </p>
         </div>
-        <Button
-          onClick={handleExport}
-          className="bg-slate-900 hover:bg-slate-800 text-white gap-2 h-10 px-5"
-        >
-          <Download className="h-4 w-4" /> Exportar PDF
-        </Button>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border">
+          <Clock className="h-4 w-4" />
+          {new Date().toLocaleDateString('pt-BR', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+          })}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-white border-none shadow-subtle">
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="border-border/60 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-5">
+            <Activity className="w-24 h-24" />
+          </div>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Eficiência Geral</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-slate-900">87%</div>
-            <p className="text-sm text-emerald-600 flex items-center gap-1 mt-1 font-medium">
-              <TrendingUp className="h-4 w-4" /> +2.5% esta semana
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white border-none shadow-subtle">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Total de Atrasos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-slate-900">14</div>
-            <p className="text-sm text-rose-600 flex items-center gap-1 mt-1 font-medium">
-              <TrendingUp className="h-4 w-4" /> +4 em relação à semana passada
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white border-none shadow-subtle">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">
-              Tarefa Mais Crítica
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Progresso do Dia
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-xl font-bold text-slate-900 truncate">Relatórios de Turno</div>
-            <p className="text-sm text-slate-500 mt-1 font-medium">15 esquecimentos no mês</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-white border-none shadow-subtle flex flex-col">
-          <CardHeader>
-            <CardTitle>Tempo Estimado vs Realizado (Minutos)</CardTitle>
-            <CardDescription>Comparativo de tempo gasto por período da rotina.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1">
-            <ChartContainer
-              config={{
-                estimated: { label: 'Estimado', color: '#94A3B8' },
-                actual: { label: 'Real', color: '#6366F1' },
-              }}
-              className="h-[300px] w-full"
-            >
-              <BarChart data={efficiencyData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                <XAxis
-                  dataKey="name"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={10}
-                  fontSize={12}
-                  stroke="#64748B"
-                />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={10}
-                  fontSize={12}
-                  stroke="#64748B"
-                />
-                <ChartTooltip cursor={{ fill: '#F1F5F9' }} content={<ChartTooltipContent />} />
-                <Bar
-                  dataKey="estimated"
-                  fill="var(--color-estimated)"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={40}
-                />
-                <Bar
-                  dataKey="actual"
-                  fill="var(--color-actual)"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={40}
-                />
-              </BarChart>
-            </ChartContainer>
+            <div className="flex items-baseline gap-2 mb-2">
+              <span className="text-3xl font-bold tracking-tighter">{progress}%</span>
+              <span className="text-sm font-medium text-muted-foreground">Concluído</span>
+            </div>
+            <Progress value={progress} className="h-2" />
+            <p className="text-xs text-muted-foreground mt-3 font-medium">
+              {completedCount} de {totalCount} tarefas finalizadas
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white border-none shadow-subtle">
-          <CardHeader>
-            <CardTitle>Heatmap de Ocorrências</CardTitle>
-            <CardDescription>Tarefas com maior índice de atraso ou esquecimento.</CardDescription>
+        <Card className="border-border/60 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-5">
+            <CheckCircle2 className="w-24 h-24" />
+          </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Status Atual
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6 mt-4">
-              {errorHeatmapData.map((item, i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <div className="flex justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-700">{item.task}</span>
-                      <span className="text-sm font-bold text-slate-900">{item.count}</span>
-                    </div>
-                    <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={cn(
-                          'h-full rounded-full transition-all',
-                          item.label === 'Crítico'
-                            ? 'bg-rose-500 w-[90%]'
-                            : item.label === 'Alto'
-                              ? 'bg-amber-500 w-[70%]'
-                              : item.label === 'Médio'
-                                ? 'bg-amber-300 w-[45%]'
-                                : 'bg-emerald-400 w-[15%]',
-                        )}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex-shrink-0 w-8 flex justify-end">
-                    {item.label === 'Crítico' && (
-                      <AlertTriangle className="h-5 w-5 text-rose-500" />
-                    )}
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-bold tracking-tighter">
+                {totalCount - completedCount}
+              </span>
+              <span className="text-sm font-medium text-muted-foreground">Pendentes</span>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {['Opening', 'Shift', 'Closing'].map((cat) => {
+                const total = tasks.filter((t) => t.category === cat).length
+                const comp = completions.filter(
+                  (c) => tasks.find((t) => t.id === c.task_id)?.category === cat,
+                ).length
+                if (total === 0) return null
+                return (
+                  <Badge key={cat} variant="secondary" className="text-[10px]">
+                    {categoryLabels[cat]}: {comp}/{total}
+                  </Badge>
+                )
+              })}
             </div>
           </CardContent>
         </Card>
+
+        <Card className="border-border/60 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-5 text-orange-600">
+            <AlertTriangle className="w-24 h-24" />
+          </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Atenção</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline gap-2">
+              <span
+                className={cn(
+                  'text-3xl font-bold tracking-tighter',
+                  lateCount > 0 ? 'text-orange-600' : 'text-green-600',
+                )}
+              >
+                {lateCount}
+              </span>
+              <span className="text-sm font-medium text-muted-foreground">Tarefas Atrasadas</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-4 font-medium">
+              {lateCount === 0
+                ? 'Rotina dentro do horário esperado.'
+                : 'Atenção aos horários limite das tarefas.'}
+            </p>
+          </CardContent>
+        </Card>
       </div>
+
+      <Card className="shadow-sm border-border/60">
+        <CardHeader className="border-b bg-muted/10 pb-4">
+          <CardTitle>Detalhamento das Tarefas</CardTitle>
+          <CardDescription>Acompanhe o registro de quem executou cada etapa.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="w-[40%] pl-6">Tarefa</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Responsável</TableHead>
+                <TableHead className="text-right pr-6">Horário</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {tasks.map((task) => {
+                const completion = completions.find((c) => c.task_id === task.id)
+                const isCompleted = !!completion
+
+                let isLate = false
+                if (isCompleted && task.expected_time) {
+                  const completedDate = new Date(completion.completed_at)
+                  const expectedHour = parseInt(task.expected_time.split(':')[0], 10)
+                  const expectedMin = parseInt(task.expected_time.split(':')[1], 10)
+
+                  const expectedDate = new Date(completion.completed_at)
+                  expectedDate.setHours(expectedHour, expectedMin, 0, 0)
+
+                  if (completedDate > expectedDate) {
+                    isLate = true
+                  }
+                } else if (!isCompleted && task.expected_time) {
+                  const now = new Date()
+                  const expectedHour = parseInt(task.expected_time.split(':')[0], 10)
+                  const expectedMin = parseInt(task.expected_time.split(':')[1], 10)
+                  const expectedDate = new Date()
+                  expectedDate.setHours(expectedHour, expectedMin, 0, 0)
+
+                  if (now > expectedDate) {
+                    isLate = true
+                  }
+                }
+
+                return (
+                  <TableRow key={task.id} className="hover:bg-muted/30">
+                    <TableCell className="pl-6">
+                      <div className="font-medium text-foreground">{task.title}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {categoryLabels[task.category]}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {isCompleted ? (
+                        <Badge
+                          variant="outline"
+                          className="bg-primary/5 text-primary border-primary/20"
+                        >
+                          Concluído
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="bg-muted text-muted-foreground border-border/50"
+                        >
+                          Pendente
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {isCompleted ? (
+                        <span className="text-sm font-medium">
+                          {completion.profiles?.full_name || 'Usuário'}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right pr-6">
+                      {isCompleted ? (
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-sm font-medium">
+                            {new Date(completion.completed_at).toLocaleTimeString('pt-BR', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                          {isLate && (
+                            <span className="text-[10px] font-semibold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">
+                              Atrasado
+                            </span>
+                          )}
+                        </div>
+                      ) : task.expected_time ? (
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-xs text-muted-foreground">
+                            Até {task.expected_time.slice(0, 5)}
+                          </span>
+                          {isLate && (
+                            <span className="text-[10px] font-semibold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">
+                              Atrasado
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+              {tasks.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+                    Nenhuma tarefa configurada.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   )
 }
