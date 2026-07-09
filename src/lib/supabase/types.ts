@@ -96,18 +96,21 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          is_active: boolean
           role: Database['public']['Enums']['user_role_enum']
         }
         Insert: {
           created_at?: string
           full_name?: string | null
           id: string
+          is_active?: boolean
           role?: Database['public']['Enums']['user_role_enum']
         }
         Update: {
           created_at?: string
           full_name?: string | null
           id?: string
+          is_active?: boolean
           role?: Database['public']['Enums']['user_role_enum']
         }
         Relationships: []
@@ -317,6 +320,7 @@ export type Database = {
           description: string | null
           expected_time: string | null
           id: string
+          instruction_url: string | null
           is_active: boolean
           is_recurring: boolean
           priority: string
@@ -331,6 +335,7 @@ export type Database = {
           description?: string | null
           expected_time?: string | null
           id?: string
+          instruction_url?: string | null
           is_active?: boolean
           is_recurring?: boolean
           priority?: string
@@ -345,6 +350,7 @@ export type Database = {
           description?: string | null
           expected_time?: string | null
           id?: string
+          instruction_url?: string | null
           is_active?: boolean
           is_recurring?: boolean
           priority?: string

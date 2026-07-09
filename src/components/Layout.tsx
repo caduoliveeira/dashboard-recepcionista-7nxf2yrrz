@@ -12,6 +12,8 @@ import {
   LifeBuoy,
   Clock,
   Users,
+  MessageSquare,
+  ClipboardCheck,
 } from 'lucide-react'
 import { NotificationBell } from '@/components/notification-bell'
 import { cn } from '@/lib/utils'
@@ -43,6 +45,8 @@ export default function Layout() {
     { name: 'Turnos', href: '/shifts', icon: Clock, show: role === 'owner' },
     { name: 'Usuários', href: '/admin/users', icon: Users, show: role === 'owner' },
     { name: 'Relatórios', href: '/reports', icon: BarChart, show: role === 'owner' },
+    { name: 'Auditoria', href: '/admin/audit', icon: ClipboardCheck, show: role === 'owner' },
+    { name: 'Chat', href: '/chat', icon: MessageSquare, show: true },
   ].filter((n) => n.show)
 
   return (

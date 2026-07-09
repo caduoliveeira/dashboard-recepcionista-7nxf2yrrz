@@ -14,6 +14,8 @@ import Maintenance from './pages/Maintenance'
 import Shopping from './pages/Shopping'
 import Emergency from './pages/Emergency'
 import UserManagement from './pages/UserManagement'
+import Audit from './pages/Audit'
+import Chat from './pages/Chat'
 import Layout from './components/Layout'
 import { AuthProvider } from '@/hooks/use-auth'
 
@@ -36,6 +38,8 @@ const App = () => (
             <Route path="/emergency" element={<Emergency />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/admin/users" element={<UserManagement />} />
+            <Route path="/admin/audit" element={<Audit />} />
+            <Route path="/chat" element={<Chat />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
