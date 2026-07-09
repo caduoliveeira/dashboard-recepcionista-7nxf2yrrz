@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { getStoredUser } from '@/stores/use-auth-store'
 
 export type Period = 'Abertura' | 'Turno Manhã' | 'Troca de Turno' | 'Turno Tarde' | 'Fechamento'
 
@@ -11,6 +12,9 @@ export interface Task {
   status: 'pending' | 'completed' | 'delayed'
   note?: string
   completedAt?: Date
+  completedBy?: string
+  completedByAvatarSeed?: string
+  completedByGender?: 'male' | 'female'
   assignedTo?: string
 }
 
@@ -23,6 +27,9 @@ let globalTasks: Task[] = [
     period: 'Abertura',
     status: 'completed',
     completedAt: new Date(new Date().setHours(7, 30, 0, 0)),
+    completedBy: 'Ana Silva',
+    completedByAvatarSeed: 'a1',
+    completedByGender: 'female',
     assignedTo: 'Ana Silva',
   },
   {
@@ -33,6 +40,9 @@ let globalTasks: Task[] = [
     period: 'Abertura',
     status: 'completed',
     completedAt: new Date(new Date().setHours(7, 50, 0, 0)),
+    completedBy: 'Ana Silva',
+    completedByAvatarSeed: 'a1',
+    completedByGender: 'female',
     assignedTo: 'Ana Silva',
   },
   {
@@ -49,7 +59,12 @@ let globalTasks: Task[] = [
     sop: 'Abastecer máquina de café, verificar copos e galão de água.',
     time: '08:15',
     period: 'Turno Manhã',
-    status: 'pending',
+    status: 'completed',
+    completedAt: new Date(new Date().setHours(8, 20, 0, 0)),
+    completedBy: 'Bruno Costa',
+    completedByAvatarSeed: 'b1',
+    completedByGender: 'male',
+    assignedTo: 'Bruno Costa',
   },
   {
     id: '5',
@@ -124,6 +139,7 @@ export default function useChecklistStore() {
   }, [])
 
   const toggleTask = (id: string) => {
+    const currentUser = getStoredUser()
     globalTasks = globalTasks.map((t) => {
       if (t.id === id) {
         const isCompleted = t.status === 'completed'
@@ -131,7 +147,10 @@ export default function useChecklistStore() {
           ...t,
           status: isCompleted ? 'pending' : 'completed',
           completedAt: isCompleted ? undefined : new Date(),
-          assignedTo: isCompleted ? undefined : 'Você',
+          completedBy: isCompleted ? undefined : currentUser?.name,
+          completedByAvatarSeed: isCompleted ? undefined : currentUser?.avatarSeed,
+          completedByGender: isCompleted ? undefined : currentUser?.gender,
+          assignedTo: isCompleted ? undefined : currentUser?.name,
         }
       }
       return t

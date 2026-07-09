@@ -1,21 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { CheckCircle2, Clock, AlertCircle, Activity, ChevronRight } from 'lucide-react'
+import { CheckCircle2, Clock, ChevronRight } from 'lucide-react'
 import useChecklistStore from '@/stores/use-checklist-store'
+import useAuthStore, { getAvatarUrl } from '@/stores/use-auth-store'
 import { Link } from 'react-router-dom'
-import { Progress } from '@/components/ui/progress'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { DashboardStats } from '@/components/dashboard-stats'
+import { StaffPerformance } from '@/components/staff-performance'
 
 export default function Index() {
   const { tasks } = useChecklistStore()
-
-  const completedCount = tasks.filter((t) => t.status === 'completed').length
-  const delayedCount = tasks.filter((t) => t.status === 'delayed').length
-  const activeCount = tasks.filter((t) => t.status === 'pending').length
-  const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0
+  const { user } = useAuthStore()
 
   const urgentTasks = tasks
     .filter((t) => t.status !== 'completed')
@@ -43,74 +41,17 @@ export default function Index() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-10">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Visão Geral</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+          {user?.role === 'owner' ? 'Painel do Proprietário' : 'Visão Geral'}
+        </h1>
         <p className="text-slate-500 mt-1 text-sm">
-          Acompanhe a saúde operacional da recepção hoje.
+          {user?.role === 'owner'
+            ? 'Monitore o desempenho da equipe e a saúde operacional.'
+            : 'Acompanhe a saúde operacional da recepção hoje.'}
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-none shadow-subtle bg-white">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Progresso Diário</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-indigo-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{progress}%</div>
-            <Progress value={progress} className="h-2 mt-3 bg-slate-100" />
-            <p className="text-xs text-slate-500 mt-2">
-              {completedCount} de {tasks.length} concluídas
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-subtle bg-white">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Tarefas Ativas</CardTitle>
-            <Activity className="h-4 w-4 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">{activeCount}</div>
-            <p className="text-xs text-slate-500 mt-1">Aguardando execução</p>
-          </CardContent>
-        </Card>
-
-        <Card
-          className={cn(
-            'border-none shadow-subtle bg-white transition-colors',
-            delayedCount > 0 && 'bg-rose-50/50',
-          )}
-        >
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Atenção Necessária</CardTitle>
-            <AlertCircle
-              className={cn('h-4 w-4', delayedCount > 0 ? 'text-rose-600' : 'text-slate-400')}
-            />
-          </CardHeader>
-          <CardContent>
-            <div
-              className={cn(
-                'text-2xl font-bold',
-                delayedCount > 0 ? 'text-rose-600' : 'text-slate-900',
-              )}
-            >
-              {delayedCount}
-            </div>
-            <p className="text-xs text-slate-500 mt-1">Tarefas atrasadas</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-subtle bg-white">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Eficiência</CardTitle>
-            <Activity className="h-4 w-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900">92%</div>
-            <p className="text-xs text-emerald-600 mt-1 font-medium">+4% comparado a ontem</p>
-          </CardContent>
-        </Card>
-      </div>
+      <DashboardStats tasks={tasks} />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-1 lg:col-span-4 border-none shadow-subtle bg-white">
@@ -166,7 +107,7 @@ export default function Index() {
               <CardTitle>Fila de Prioridades</CardTitle>
               <Link
                 to="/checklist"
-                className="text-sm font-medium text-indigo-600 hover:text-indigo-700 flex items-center"
+                className="text-sm font-medium text-primary hover:text-primary/80 flex items-center"
               >
                 Ver todas <ChevronRight className="h-4 w-4 ml-1" />
               </Link>
@@ -217,42 +158,55 @@ export default function Index() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-1">
-        <Card className="border-none shadow-subtle bg-white">
-          <CardHeader>
-            <CardTitle>Feed de Atividades Recentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {recentlyCompleted.map((task, i) => (
-                <div key={task.id} className="flex gap-4 relative">
-                  {i !== recentlyCompleted.length - 1 && (
-                    <div className="absolute top-8 left-4 bottom-[-24px] w-px bg-slate-200" />
+      {user?.role === 'owner' && (
+        <div className="grid gap-6 md:grid-cols-1">
+          <StaffPerformance />
+        </div>
+      )}
+
+      <Card className="border-none shadow-subtle bg-white">
+        <CardHeader>
+          <CardTitle>Feed de Atividades Recentes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {recentlyCompleted.map((task, i) => (
+              <div key={task.id} className="flex gap-4 relative">
+                {i !== recentlyCompleted.length - 1 && (
+                  <div className="absolute top-8 left-4 bottom-[-24px] w-px bg-slate-200" />
+                )}
+                <div className="h-8 w-8 rounded-full bg-primary/10 border-2 border-white flex items-center justify-center flex-shrink-0 z-10 shadow-sm overflow-hidden">
+                  {task.completedByAvatarSeed && task.completedByGender ? (
+                    <img
+                      src={getAvatarUrl({
+                        avatarSeed: task.completedByAvatarSeed,
+                        gender: task.completedByGender,
+                      })}
+                      alt={task.completedBy}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
                   )}
-                  <div className="h-8 w-8 rounded-full bg-indigo-50 border-2 border-white flex items-center justify-center flex-shrink-0 z-10 shadow-sm">
-                    <CheckCircle2 className="h-4 w-4 text-indigo-600" />
-                  </div>
-                  <div className="flex-1 pb-1">
-                    <p className="text-sm text-slate-900">
-                      <span className="font-semibold">{task.assignedTo}</span> concluiu{' '}
-                      <span className="font-medium text-indigo-900">{task.title}</span>
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                      <Clock className="h-3 w-3" />{' '}
-                      {task.completedAt ? format(task.completedAt, 'HH:mm', { locale: ptBR }) : ''}
-                    </p>
-                  </div>
                 </div>
-              ))}
-              {recentlyCompleted.length === 0 && (
-                <p className="text-sm text-slate-500 text-center py-4">
-                  Nenhuma atividade recente.
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                <div className="flex-1 pb-1">
+                  <p className="text-sm text-slate-900">
+                    <span className="font-semibold">{task.completedBy || task.assignedTo}</span>{' '}
+                    concluiu <span className="font-medium text-slate-700">{task.title}</span>
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                    <Clock className="h-3 w-3" />{' '}
+                    {task.completedAt ? format(task.completedAt, 'HH:mm', { locale: ptBR }) : ''}
+                  </p>
+                </div>
+              </div>
+            ))}
+            {recentlyCompleted.length === 0 && (
+              <p className="text-sm text-slate-500 text-center py-4">Nenhuma atividade recente.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
