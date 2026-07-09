@@ -25,10 +25,18 @@ export function ActivityFeed({ items }: ActivityFeedProps) {
               <div key={item.id} className="text-sm border-l-2 border-primary/30 pl-3 space-y-0.5">
                 <p className="font-medium text-foreground">{item.full_name || 'Usuário'}</p>
                 <p className="text-muted-foreground">
-                  completou <span className="font-medium">"{item.task_title}"</span>
+                  {item.action === 'completed' ? (
+                    <>
+                      completou <span className="font-medium">"{item.task_title}"</span>
+                    </>
+                  ) : (
+                    <span className="text-amber-600">
+                      pulou <span className="font-medium">"{item.task_title}"</span>
+                    </span>
+                  )}
                 </p>
                 <p className="text-xs text-muted-foreground/70">
-                  {new Date(item.completed_at).toLocaleTimeString('pt-BR', {
+                  {new Date(item.timestamp).toLocaleTimeString('pt-BR', {
                     hour: '2-digit',
                     minute: '2-digit',
                   })}

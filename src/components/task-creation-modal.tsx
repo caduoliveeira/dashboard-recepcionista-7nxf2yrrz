@@ -21,6 +21,8 @@ import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 import { createTask } from '@/services/tasks'
 import { fetchCategories, type TaskCategory } from '@/services/task-categories'
+import { uploadTaskAttachment } from '@/services/task-attachments'
+import { FileText, Upload, X } from 'lucide-react'
 
 const WEEK_DAYS = [
   { value: 'monday', label: 'Seg' },
@@ -50,6 +52,9 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
   const [time, setTime] = useState('')
   const [priority, setPriority] = useState('Medium')
   const [saving, setSaving] = useState(false)
+  const [instructionUrl, setInstructionUrl] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [fileName, setFileName] = useState('')
 
   useEffect(() => {
     if (open) {
@@ -68,10 +73,39 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
     setDays([])
     setTime('')
     setPriority('Medium')
+    setInstructionUrl(null)
+    setFileName('')
   }
 
   const toggleDay = (d: string) =>
     setDays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]))
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: 'Arquivo muito grande',
+        description: 'Máximo 10MB.',
+        variant: 'destructive',
+      })
+      return
+    }
+    setUploading(true)
+    const { url, error } = await uploadTaskAttachment(file)
+    setUploading(false)
+    if (error || !url) {
+      toast({ title: 'Erro', description: 'Falha no upload.', variant: 'destructive' })
+      return
+    }
+    setInstructionUrl(url)
+    setFileName(file.name)
+  }
+
+  const removeFile = () => {
+    setInstructionUrl(null)
+    setFileName('')
+  }
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -111,6 +145,7 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
       recurrence_type: mode === 'recurring' ? freq : null,
       recurrence_days: mode === 'recurring' && freq === 'weekly' ? days : null,
       priority,
+      instruction_url: instructionUrl,
     })
     setSaving(false)
 
@@ -191,6 +226,38 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
                 <SelectItem value="Low">Baixa</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Manual / Instrução (PDF ou Imagem)</Label>
+            {instructionUrl ? (
+              <div className="flex items-center gap-2 bg-muted/50 rounded-md p-2">
+                <FileText className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-sm flex-1 truncate">{fileName}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={removeFile}
+                  className="h-7 w-7 p-0"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <label className="flex items-center gap-2 cursor-pointer border border-dashed rounded-md p-3 hover:bg-muted/30 transition-colors">
+                <Upload className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  {uploading ? 'Enviando...' : 'Clique para anexar arquivo'}
+                </span>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                />
+              </label>
+            )}
           </div>
           <div className="space-y-3">
             <Label>Recorrência</Label>

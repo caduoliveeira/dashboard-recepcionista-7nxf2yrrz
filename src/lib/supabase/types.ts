@@ -112,6 +112,45 @@ export type Database = {
         }
         Relationships: []
       }
+      shift_handover_notes: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          note: string
+          user_id: string | null
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          note: string
+          user_id?: string | null
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          note?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'shift_handover_notes_category_id_fkey'
+            columns: ['category_id']
+            isOneToOne: false
+            referencedRelation: 'task_categories'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'shift_handover_notes_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       shopping_list: {
         Row: {
           created_at: string

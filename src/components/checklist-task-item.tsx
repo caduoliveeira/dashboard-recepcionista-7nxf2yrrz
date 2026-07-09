@@ -8,6 +8,7 @@ import {
   AlertTriangle,
   Timer,
   SkipForward,
+  FileText,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Task, TaskCompletion } from '@/services/tasks'
@@ -69,6 +70,16 @@ export function ChecklistTaskItem({ task, completion, onComplete }: ChecklistTas
               {task.title}
             </p>
             <div className="flex flex-wrap gap-1 shrink-0">
+              {task.instruction_url && (
+                <a
+                  href={task.instruction_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200 flex items-center gap-1 hover:bg-blue-100 transition-colors"
+                >
+                  <FileText className="h-3 w-3" /> Manual
+                </a>
+              )}
               <PriorityBadge priority={task.priority || 'Medium'} />
               {overdue && (
                 <span className="text-[10px] font-semibold text-destructive bg-destructive/10 px-2 py-0.5 rounded-full border border-destructive/20 flex items-center gap-1">

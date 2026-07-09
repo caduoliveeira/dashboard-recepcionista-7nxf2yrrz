@@ -26,7 +26,8 @@ import { ChecklistTaskItem } from '@/components/checklist-task-item'
 import { ChecklistFilterBar } from '@/components/checklist-filter-bar'
 import { ActivityFeed } from '@/components/activity-feed'
 import { ShiftHandoverNotes } from '@/components/shift-handover-notes'
-import { shouldShowTask, type FilterType } from '@/lib/task-utils'
+import { shouldShowTask, shouldShowTaskToday, type FilterType } from '@/lib/task-utils'
+import { supabase } from '@/lib/supabase/client'
 
 const formatTimeRange = (start: string | null, end: string | null) => {
   if (!start && !end) return ''
@@ -53,6 +54,34 @@ export default function Checklist() {
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000)
     return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('task-activity-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'task_completions' },
+        () => {
+          fetchTodayActivity().then(({ data }) => {
+            if (data) setActivity(data)
+          })
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'task_exceptions' },
+        () => {
+          fetchTodayActivity().then(({ data }) => {
+            if (data) setActivity(data)
+          })
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   const loadData = async () => {
@@ -95,6 +124,7 @@ export default function Checklist() {
   const filterCounts = useMemo(() => {
     const counts: Record<FilterType, number> = { all: 0, now: 0, upcoming: 0, completed: 0 }
     tasks.forEach((t) => {
+      if (!shouldShowTaskToday(t.recurrence_days)) return
       const isCompleted = completedIds.has(t.id)
       counts.all++
       if (shouldShowTask(t.expected_time, isCompleted, 'now')) counts.now++
@@ -105,7 +135,12 @@ export default function Checklist() {
   }, [tasks, completedIds])
 
   const filteredTasks = useMemo(
-    () => tasks.filter((t) => shouldShowTask(t.expected_time, completedIds.has(t.id), filter)),
+    () =>
+      tasks.filter(
+        (t) =>
+          shouldShowTask(t.expected_time, completedIds.has(t.id), filter) &&
+          shouldShowTaskToday(t.recurrence_days),
+      ),
     [tasks, completedIds, filter],
   )
 

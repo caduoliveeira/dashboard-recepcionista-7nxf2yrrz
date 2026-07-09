@@ -26,6 +26,16 @@ export function wasCompletedLate(completedAt: string, expectedTime: string | nul
   return completedMinutes > parseTimeToMinutes(expectedTime)
 }
 
+export function getTodayDayName(): string {
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+  return days[new Date().getDay()]
+}
+
+export function shouldShowTaskToday(recurrenceDays: string[] | null): boolean {
+  if (!recurrenceDays || recurrenceDays.length === 0) return true
+  return recurrenceDays.includes(getTodayDayName())
+}
+
 export type FilterType = 'all' | 'now' | 'upcoming' | 'completed'
 
 export function shouldShowTask(

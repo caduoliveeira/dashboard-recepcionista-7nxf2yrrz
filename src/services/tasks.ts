@@ -12,6 +12,7 @@ export type Task = {
   recurrence_type: string | null
   recurrence_days: string[] | null
   priority: string
+  instruction_url: string | null
 }
 
 export type TaskCompletion = {
@@ -52,6 +53,7 @@ export type CreateTaskInput = {
   recurrence_type?: string | null
   recurrence_days?: string[] | null
   priority?: string
+  instruction_url?: string | null
 }
 
 const formatTime = (time: string | null | undefined): string | null => {
@@ -154,6 +156,7 @@ export const createTask = async (input: CreateTaskInput) => {
         ? (input.recurrence_days ?? null)
         : null,
     priority: input.priority || 'Medium',
+    instruction_url: input.instruction_url || null,
   }
 
   const { data, error } = await supabase
@@ -167,34 +170,62 @@ export const createTask = async (input: CreateTaskInput) => {
 
 export type ActivityItem = {
   id: string
-  completed_at: string
+  action: 'completed' | 'skipped'
   task_title: string | null
   full_name: string | null
+  timestamp: string
 }
 
 export const fetchTodayActivity = async () => {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  const { data, error } = await supabase
-    .from('task_completions')
-    .select(`
-      id, completed_at,
-      tasks ( title ),
-      profiles ( full_name )
-    `)
-    .gte('completed_at', today.toISOString())
-    .order('completed_at', { ascending: false })
-    .limit(15)
+  const [completionsRes, exceptionsRes] = await Promise.all([
+    supabase
+      .from('task_completions')
+      .select(`
+        id, completed_at,
+        tasks ( title ),
+        profiles ( full_name )
+      `)
+      .gte('completed_at', today.toISOString())
+      .order('completed_at', { ascending: false })
+      .limit(15),
+    supabase
+      .from('task_exceptions')
+      .select(`
+        id, skipped_at,
+        tasks ( title ),
+        profiles ( full_name )
+      `)
+      .gte('skipped_at', today.toISOString())
+      .order('skipped_at', { ascending: false })
+      .limit(15),
+  ])
 
-  const formatted = (data || []).map((item: any) => ({
-    id: item.id,
-    completed_at: item.completed_at,
+  const completions: ActivityItem[] = (completionsRes.data || []).map((item: any) => ({
+    id: `c-${item.id}`,
+    action: 'completed' as const,
     task_title: Array.isArray(item.tasks) ? item.tasks[0]?.title : item.tasks?.title,
     full_name: Array.isArray(item.profiles)
       ? item.profiles[0]?.full_name
       : item.profiles?.full_name,
-  })) as ActivityItem[]
+    timestamp: item.completed_at,
+  }))
 
-  return { data: formatted, error }
+  const exceptions: ActivityItem[] = (exceptionsRes.data || []).map((item: any) => ({
+    id: `e-${item.id}`,
+    action: 'skipped' as const,
+    task_title: Array.isArray(item.tasks) ? item.tasks[0]?.title : item.tasks?.title,
+    full_name: Array.isArray(item.profiles)
+      ? item.profiles[0]?.full_name
+      : item.profiles?.full_name,
+    timestamp: item.skipped_at,
+  }))
+
+  const merged = [...completions, ...exceptions]
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 20)
+
+  return { data: merged, error: completionsRes.error || exceptionsRes.error }
 }

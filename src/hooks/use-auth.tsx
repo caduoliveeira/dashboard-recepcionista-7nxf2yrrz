@@ -36,6 +36,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const fetchProfile = async (userId: string) => {
       const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
       if (mounted) {
+        if (data && data.is_active === false) {
+          await supabase.auth.signOut()
+          setProfile(null)
+          setRole(null)
+          setUser(null)
+          setSession(null)
+          setLoading(false)
+          return
+        }
         setProfile(data)
         setRole(data?.role as UserRole)
         setLoading(false)
