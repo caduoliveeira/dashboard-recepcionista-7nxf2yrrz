@@ -45,3 +45,11 @@ export const deleteCategory = async (id: string) => {
   const { error } = await supabase.from('task_categories').delete().eq('id', id)
   return { error }
 }
+
+export const fetchTaskCountByCategory = async (categoryId: string) => {
+  const { count, error } = await supabase
+    .from('tasks')
+    .select('*', { count: 'exact', head: true })
+    .eq('category_id', categoryId)
+  return { count: count || 0, error }
+}

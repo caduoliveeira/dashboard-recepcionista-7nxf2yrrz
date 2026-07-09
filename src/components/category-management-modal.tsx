@@ -12,10 +12,10 @@ import { Label } from '@/components/ui/label'
 import { Clock, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import {
-  fetchTaskCategories,
-  createTaskCategory,
-  updateTaskCategory,
-  deleteTaskCategory,
+  fetchCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
   fetchTaskCountByCategory,
   type TaskCategory,
 } from '@/services/task-categories'
@@ -41,8 +41,8 @@ export function CategoryManagementModal({ open, onOpenChange, onCategoriesChange
 
   const load = useCallback(async () => {
     setLoading(true)
-    const { data } = await fetchTaskCategories()
-    setCategories(data)
+    const { data } = await fetchCategories()
+    if (data) setCategories(data)
     setLoading(false)
   }, [])
 
@@ -74,8 +74,8 @@ export function CategoryManagementModal({ open, onOpenChange, onCategoriesChange
     setSaving(true)
     const input = { name: name.trim(), start_time: startTime || null, end_time: endTime || null }
     const { error } = editingId
-      ? await updateTaskCategory(editingId, input)
-      : await createTaskCategory(input)
+      ? await updateCategory(editingId, input)
+      : await createCategory(input)
     setSaving(false)
     if (error) {
       toast({ title: 'Erro', description: 'Não foi possível salvar.', variant: 'destructive' })
@@ -100,7 +100,7 @@ export function CategoryManagementModal({ open, onOpenChange, onCategoriesChange
       })
       return
     }
-    const { error } = await deleteTaskCategory(cat.id)
+    const { error } = await deleteCategory(cat.id)
     if (error) {
       toast({ title: 'Erro', description: 'Não foi possível excluir.', variant: 'destructive' })
       return

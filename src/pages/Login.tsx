@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
-import { useNavigate, Navigate } from 'react-router-dom'
+import { useNavigate, Navigate, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -40,11 +40,6 @@ export default function Login() {
       navigate('/')
     }
     setIsLoading(false)
-  }
-
-  const loginAs = (e: string) => {
-    setEmail(e)
-    setPassword('Skip@Pass')
   }
 
   return (
@@ -100,27 +95,11 @@ export default function Login() {
           </form>
         </CardContent>
         <CardFooter className="flex flex-col gap-3 pb-8">
-          <div className="relative w-full text-center">
-            <span className="bg-card px-2 text-xs text-muted-foreground relative z-10">
-              CONTAS DE DEMONSTRAÇÃO
-            </span>
-            <div className="absolute top-1/2 left-0 w-full h-px bg-border -z-0" />
-          </div>
-          <div className="flex gap-2 w-full">
-            <Button
-              variant="outline"
-              className="w-full text-xs"
-              onClick={() => loginAs('caadu1903@gmail.com')}
-            >
-              Dono
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full text-xs"
-              onClick={() => loginAs('receptionist@example.com')}
-            >
-              Recepcionista
-            </Button>
+          <div className="text-center w-full text-sm text-muted-foreground">
+            Ainda não tem conta?{' '}
+            <Link to="/auth/signup" className="text-primary hover:underline">
+              Cadastre-se
+            </Link>
           </div>
         </CardFooter>
       </Card>

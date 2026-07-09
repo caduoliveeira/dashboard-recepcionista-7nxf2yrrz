@@ -16,12 +16,13 @@ import { useAuth } from '@/hooks/use-auth'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { CheckCircle2, Clock, Plus } from 'lucide-react'
+import { CheckCircle2, Clock, Plus, Settings2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { TaskCreationModal } from '@/components/task-creation-modal'
+import { CategoryManagementModal } from '@/components/category-management-modal'
 import { ChecklistTaskItem } from '@/components/checklist-task-item'
 import { ChecklistFilterBar } from '@/components/checklist-filter-bar'
 import { ActivityFeed } from '@/components/activity-feed'
@@ -43,6 +44,7 @@ export default function Checklist() {
   const [activity, setActivity] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
   const [, setNow] = useState(Date.now())
   const { toast } = useToast()
@@ -189,9 +191,18 @@ export default function Checklist() {
             })}
           </div>
           {role === 'owner' && (
-            <Button onClick={() => setModalOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" /> Nova Tarefa
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                onClick={() => setCategoryModalOpen(true)}
+                className="gap-2"
+              >
+                <Settings2 className="h-4 w-4" /> Turnos
+              </Button>
+              <Button onClick={() => setModalOpen(true)} className="gap-2">
+                <Plus className="h-4 w-4" /> Nova Tarefa
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -264,6 +275,11 @@ export default function Checklist() {
       )}
 
       <TaskCreationModal open={modalOpen} onOpenChange={setModalOpen} onTaskCreated={loadData} />
+      <CategoryManagementModal
+        open={categoryModalOpen}
+        onOpenChange={setCategoryModalOpen}
+        onCategoriesChanged={loadData}
+      />
     </div>
   )
 }
