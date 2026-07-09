@@ -1,15 +1,6 @@
 -- Ensure task_exceptions FK cascades on task deletion
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.table_constraints
-    WHERE constraint_name = 'task_exceptions_task_id_fkey'
-      AND table_name = 'task_exceptions'
-      AND schema_name = 'public'
-  ) THEN
-    ALTER TABLE public.task_exceptions DROP CONSTRAINT IF EXISTS task_exceptions_task_id_fkey;
-  END IF;
-END $$;
+-- ALTER TABLE ... DROP CONSTRAINT IF EXISTS is already idempotent, no DO block needed
+ALTER TABLE public.task_exceptions DROP CONSTRAINT IF EXISTS task_exceptions_task_id_fkey;
 
 ALTER TABLE public.task_exceptions
   ADD CONSTRAINT task_exceptions_task_id_fkey
