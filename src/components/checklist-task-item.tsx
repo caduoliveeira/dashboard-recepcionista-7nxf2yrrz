@@ -9,21 +9,32 @@ import {
   Timer,
   SkipForward,
   FileText,
+  Trash2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Task, TaskCompletion } from '@/services/tasks'
 import { isTaskOverdue, isTaskUpcoming, wasCompletedLate } from '@/lib/task-utils'
 import { PriorityBadge } from '@/components/priority-badge'
 import { SkipTaskDialog } from '@/components/skip-task-dialog'
+import { DeleteTaskDialog } from '@/components/delete-task-dialog'
 
 interface ChecklistTaskItemProps {
   task: Task
   completion?: TaskCompletion
   onComplete: (taskId: string) => void
+  onDelete?: (taskId: string) => void
+  canDelete?: boolean
 }
 
-export function ChecklistTaskItem({ task, completion, onComplete }: ChecklistTaskItemProps) {
+export function ChecklistTaskItem({
+  task,
+  completion,
+  onComplete,
+  onDelete,
+  canDelete,
+}: ChecklistTaskItemProps) {
   const [skipOpen, setSkipOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const isCompleted = !!completion
   const overdue = isTaskOverdue(task.expected_time, isCompleted)
   const upcoming = isTaskUpcoming(task.expected_time, isCompleted)
@@ -149,10 +160,28 @@ export function ChecklistTaskItem({ task, completion, onComplete }: ChecklistTas
                 <SkipForward className="h-3 w-3" /> Pular
               </Button>
             )}
+            {canDelete && onDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setDeleteOpen(true)}
+                className="h-6 px-2 text-[11px] text-muted-foreground hover:text-destructive gap-1 ml-auto"
+              >
+                <Trash2 className="h-3 w-3" /> Excluir
+              </Button>
+            )}
           </div>
         </div>
       </div>
       <SkipTaskDialog task={task} open={skipOpen} onOpenChange={setSkipOpen} />
+      <DeleteTaskDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={() => {
+          setDeleteOpen(false)
+          onDelete(task.id)
+        }}
+      />
     </li>
   )
 }

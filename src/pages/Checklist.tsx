@@ -3,6 +3,7 @@ import {
   fetchTasks,
   fetchTodayCompletions,
   markTaskComplete,
+  deleteTask,
   fetchTodayActivity,
   type Task,
   type TaskCompletion,
@@ -119,6 +120,24 @@ export default function Checklist() {
       })
       toast({ title: 'Sucesso', description: 'Tarefa concluída!' })
     }
+  }
+
+  const handleDelete = async (taskId: string) => {
+    const { error } = await deleteTask(taskId)
+    if (error) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível excluir a tarefa.',
+        variant: 'destructive',
+      })
+      return
+    }
+    setTasks((prev) => prev.filter((t) => t.id !== taskId))
+    setCompletions((prev) => prev.filter((c) => c.task_id !== taskId))
+    fetchTodayActivity().then(({ data: act }) => {
+      if (act) setActivity(act)
+    })
+    toast({ title: 'Sucesso', description: 'Tarefa excluída com sucesso!' })
   }
 
   const completedIds = useMemo(() => new Set(completions.map((c) => c.task_id)), [completions])
@@ -259,6 +278,8 @@ export default function Checklist() {
                           task={task}
                           completion={completions.find((c) => c.task_id === task.id)}
                           onComplete={handleComplete}
+                          onDelete={handleDelete}
+                          canDelete={role === 'owner'}
                         />
                       ))}
                     </ul>

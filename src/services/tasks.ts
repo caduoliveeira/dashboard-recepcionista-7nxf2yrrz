@@ -141,6 +141,11 @@ export const fetchRecentCompletions = async (days = 7) => {
   return { data: formatted, error }
 }
 
+export const deleteTask = async (taskId: string) => {
+  const { error } = await supabase.from('tasks').delete().eq('id', taskId)
+  return { error }
+}
+
 export const createTask = async (input: CreateTaskInput) => {
   const payload = {
     title: input.title,
