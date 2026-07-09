@@ -5,12 +5,19 @@ export type Task = {
   title: string
   description: string | null
   category: string
+  category_id: string | null
   expected_time: string | null
   is_active: boolean
   is_recurring: boolean
   recurrence_type: string | null
   recurrence_days: string[] | null
   priority: string
+  task_categories?: {
+    id: string
+    name: string
+    start_time: string | null
+    end_time: string | null
+  } | null
 }
 
 export type TaskCompletion = {
@@ -45,6 +52,7 @@ export type CreateTaskInput = {
   title: string
   description?: string | null
   category: string
+  category_id: string
   expected_time?: string | null
   is_recurring: boolean
   recurrence_type?: string | null
@@ -60,10 +68,16 @@ const formatTime = (time: string | null | undefined): string | null => {
 export const fetchTasks = async () => {
   const { data, error } = await supabase
     .from('tasks')
-    .select('*')
+    .select('*, task_categories(id, name, start_time, end_time)')
     .eq('is_active', true)
     .order('expected_time', { ascending: true })
-  return { data: (data as unknown as Task[]) || [], error }
+  const formatted = (data || []).map((item: any) => ({
+    ...item,
+    task_categories: Array.isArray(item.task_categories)
+      ? item.task_categories[0]
+      : item.task_categories,
+  })) as Task[]
+  return { data: formatted, error }
 }
 
 export const fetchCategories = async () => {
@@ -142,6 +156,7 @@ export const createTask = async (input: CreateTaskInput) => {
     title: input.title,
     description: input.description || null,
     category: input.category,
+    category_id: input.category_id,
     expected_time: formatTime(input.expected_time),
     is_active: true,
     is_recurring: input.is_recurring,
