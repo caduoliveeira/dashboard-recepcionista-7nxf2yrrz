@@ -77,6 +77,9 @@ export type Database = {
           expected_time: string | null
           id: string
           is_active: boolean
+          is_recurring: boolean
+          recurrence_days: string[] | null
+          recurrence_type: string | null
           title: string
         }
         Insert: {
@@ -86,6 +89,9 @@ export type Database = {
           expected_time?: string | null
           id?: string
           is_active?: boolean
+          is_recurring?: boolean
+          recurrence_days?: string[] | null
+          recurrence_type?: string | null
           title: string
         }
         Update: {
@@ -95,6 +101,9 @@ export type Database = {
           expected_time?: string | null
           id?: string
           is_active?: boolean
+          is_recurring?: boolean
+          recurrence_days?: string[] | null
+          recurrence_type?: string | null
           title?: string
         }
         Relationships: []

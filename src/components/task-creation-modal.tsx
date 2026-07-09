@@ -219,7 +219,7 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
             </Popover>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="t-time">Horário Esperado</Label>
+            <Label htmlFor="t-time">Horário Previsto</Label>
             <Input id="t-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
           </div>
           <div className="space-y-3">

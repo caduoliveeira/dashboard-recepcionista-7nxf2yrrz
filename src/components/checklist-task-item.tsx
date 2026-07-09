@@ -54,10 +54,17 @@ export function ChecklistTaskItem({ task, completion, onComplete }: ChecklistTas
               {task.description}
             </p>
           )}
-          {task.expected_time && !isCompleted && (
-            <div className="flex items-center text-[11px] font-medium text-orange-600/80 bg-orange-50 w-fit px-1.5 py-0.5 rounded border border-orange-100 mt-2">
+          {task.expected_time && (
+            <div
+              className={cn(
+                'flex items-center text-[11px] font-medium w-fit px-1.5 py-0.5 rounded border mt-2 transition-all',
+                isCompleted
+                  ? 'text-muted-foreground/50 bg-muted/20 border-border/50'
+                  : 'text-primary/80 bg-primary/5 border-primary/10',
+              )}
+            >
               <Clock className="h-3 w-3 mr-1" />
-              Esperado até: {task.expected_time.slice(0, 5)}
+              {task.expected_time.slice(0, 5)}
             </div>
           )}
           {task.is_recurring && !isCompleted && (

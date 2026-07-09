@@ -36,7 +36,7 @@ export default function Layout() {
                 <div className="bg-primary p-1.5 rounded-md shadow-sm">
                   <Activity className="h-5 w-5 text-primary-foreground" />
                 </div>
-                <span className="text-xl font-bold text-foreground tracking-tight">GymRoutine</span>
+                <span className="text-xl font-bold text-foreground tracking-tight">TRoutineG</span>
               </div>
               <nav className="hidden md:flex space-x-2">
                 {navigation.map((item) => (

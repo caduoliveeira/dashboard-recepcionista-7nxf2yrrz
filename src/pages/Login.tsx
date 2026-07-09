@@ -59,10 +59,10 @@ export default function Login() {
             <Activity className="h-7 w-7 text-primary-foreground" />
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
-            Gym Routine
+            TRoutineG
           </CardTitle>
           <CardDescription className="text-base">
-            O painel de controle da sua recepção
+            O painel de controle da The Ruby's Gym
           </CardDescription>
         </CardHeader>
         <CardContent>
