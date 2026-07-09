@@ -14,9 +14,13 @@ import { PunctualityCards } from '@/components/punctuality-cards'
 import { DelayedTasksList } from '@/components/delayed-tasks-list'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
-import { Clock } from 'lucide-react'
+import { Clock, Target } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { Button } from '@/components/ui/button'
+import { fetchGymSettings } from '@/services/settings'
+import { PerformanceGauge } from '@/components/performance-gauge'
+import { GoalSettingsModal } from '@/components/goal-settings-modal'
 
 const CATEGORY_LABELS: Record<string, string> = {
   Opening: 'Abertura',
@@ -30,20 +34,24 @@ export default function Index() {
   const [completions, setCompletions] = useState<TaskCompletion[]>([])
   const [recentCompletions, setRecentCompletions] = useState<CompletionWithTask[]>([])
   const [loading, setLoading] = useState(true)
+  const [targetRate, setTargetRate] = useState(90)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   useEffect(() => {
     loadData()
   }, [])
 
   const loadData = async () => {
-    const [t, c, r] = await Promise.all([
+    const [t, c, r, s] = await Promise.all([
       fetchTasks(),
       fetchTodayCompletions(),
       fetchRecentCompletions(7),
+      fetchGymSettings(),
     ])
     if (t.data) setTasks(t.data)
     if (c.data) setCompletions(c.data)
     if (r.data) setRecentCompletions(r.data)
+    if (s.data) setTargetRate(s.data.target_completion_rate)
     setLoading(false)
   }
 
@@ -120,13 +128,18 @@ export default function Index() {
             Visão geral da performance e pontualidade da equipe.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border">
-          <Clock className="h-4 w-4" />
-          {new Date().toLocaleDateString('pt-BR', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          })}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border">
+            <Clock className="h-4 w-4" />
+            {new Date().toLocaleDateString('pt-BR', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+            })}
+          </div>
+          <Button variant="outline" onClick={() => setSettingsOpen(true)} className="gap-2">
+            <Target className="h-4 w-4" /> Meta
+          </Button>
         </div>
       </div>
 
@@ -139,7 +152,16 @@ export default function Index() {
         totalTasks={stats.totalTasks}
       />
 
+      <PerformanceGauge actualRate={stats.onTimeRate} targetRate={targetRate} />
+
       <DelayedTasksList stats={stats.frequentlyDelayed} />
+
+      <GoalSettingsModal
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        currentTarget={targetRate}
+        onSaved={setTargetRate}
+      />
 
       <Card className="shadow-sm border-border/60">
         <CardHeader className="border-b bg-muted/10 pb-4">

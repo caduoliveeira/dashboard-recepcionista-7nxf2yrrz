@@ -24,6 +24,9 @@ import { Badge } from '@/components/ui/badge'
 import { PunctualityCards } from '@/components/punctuality-cards'
 import { DelayedTasksList } from '@/components/delayed-tasks-list'
 import { wasCompletedLate, isTaskOverdue } from '@/lib/task-utils'
+import { exportToCSV } from '@/lib/csv-utils'
+import { Button } from '@/components/ui/button'
+import { Download } from 'lucide-react'
 
 const CATEGORY_LABELS: Record<string, string> = {
   Opening: 'Abertura',
@@ -102,6 +105,44 @@ export default function Reports() {
     }
   }, [tasks, completions, recentCompletions])
 
+  const handleExport = () => {
+    const headers = [
+      'Tarefa',
+      'Categoria',
+      'Horario Previsto',
+      'Horario de Conclusao',
+      'Status',
+      'Responsavel',
+    ]
+    const rows = tasks.map((task) => {
+      const completion = completions.find((c) => c.task_id === task.id)
+      const isCompleted = !!completion
+      const late = isCompleted && wasCompletedLate(completion!.completed_at, task.expected_time)
+      const status = isCompleted
+        ? late
+          ? 'Atrasado'
+          : 'No Prazo'
+        : isTaskOverdue(task.expected_time, false)
+          ? 'Atrasado'
+          : 'Pendente'
+      const completionTime = isCompleted
+        ? new Date(completion.completed_at).toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : ''
+      return [
+        task.title,
+        CATEGORY_LABELS[task.category] || task.category,
+        task.expected_time ? task.expected_time.slice(0, 5) : '',
+        completionTime,
+        status,
+        isCompleted ? completion.profiles?.full_name || 'Usuario' : '',
+      ]
+    })
+    exportToCSV(`relatorio-trg-${new Date().toISOString().slice(0, 10)}.csv`, headers, rows)
+  }
+
   if (role !== 'owner') return <Navigate to="/checklist" replace />
   if (loading) {
     return (
@@ -128,13 +169,18 @@ export default function Reports() {
             Acompanhamento da execução e pontualidade da rotina.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border">
-          <Clock className="h-4 w-4" />
-          {new Date().toLocaleDateString('pt-BR', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          })}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border">
+            <Clock className="h-4 w-4" />
+            {new Date().toLocaleDateString('pt-BR', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+            })}
+          </div>
+          <Button variant="outline" onClick={handleExport} className="gap-2">
+            <Download className="h-4 w-4" /> Exportar CSV
+          </Button>
         </div>
       </div>
 
