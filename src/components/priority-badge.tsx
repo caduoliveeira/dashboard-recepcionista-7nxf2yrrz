@@ -7,7 +7,7 @@ export function PriorityBadge({ priority }: { priority: string }) {
     High: {
       icon: AlertTriangle,
       className:
-        'bg-primary/[0.05] text-[#ff4d4d] border-primary/20 shadow-[0_0_10px_rgba(128,0,32,0.1)]',
+        'bg-red-500/10 text-red-500 border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.2)] font-black',
       label: 'ALTA PRIORIDADE',
     },
     Medium: {

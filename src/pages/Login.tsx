@@ -20,9 +20,18 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const { signIn, user } = useAuth()
+  const { signIn, user, loading } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#030303]/95 via-[#0a0a0a]/80 to-primary/40 pointer-events-none z-0" />
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin shadow-glow relative z-10"></div>
+      </div>
+    )
+  }
 
   if (user) return <Navigate to="/checklist" replace />
 

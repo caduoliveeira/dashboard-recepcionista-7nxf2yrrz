@@ -18,34 +18,37 @@ import Audit from './pages/Audit'
 import Chat from './pages/Chat'
 import Layout from './components/Layout'
 import { AuthProvider } from '@/hooks/use-auth'
+import { ErrorBoundary } from '@/components/error-boundary'
 
 const App = () => (
-  <AuthProvider>
-    <BrowserRouter>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/auth/signup" element={<Signup />} />
-          <Route element={<Layout />}>
-            <Route path="/" element={<Index />} />
-            <Route path="/checklist" element={<Checklist />} />
-            <Route path="/shifts" element={<ShiftManagement />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="/maintenance" element={<Maintenance />} />
-            <Route path="/shopping" element={<Shopping />} />
-            <Route path="/emergency" element={<Emergency />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/admin/users" element={<UserManagement />} />
-            <Route path="/admin/audit" element={<Audit />} />
-            <Route path="/chat" element={<Chat />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </TooltipProvider>
-    </BrowserRouter>
-  </AuthProvider>
+  <ErrorBoundary>
+    <AuthProvider>
+      <BrowserRouter>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/auth/signup" element={<Signup />} />
+            <Route element={<Layout />}>
+              <Route path="/" element={<Index />} />
+              <Route path="/checklist" element={<Checklist />} />
+              <Route path="/shifts" element={<ShiftManagement />} />
+              <Route path="/inventory" element={<Inventory />} />
+              <Route path="/maintenance" element={<Maintenance />} />
+              <Route path="/shopping" element={<Shopping />} />
+              <Route path="/emergency" element={<Emergency />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/admin/users" element={<UserManagement />} />
+              <Route path="/admin/audit" element={<Audit />} />
+              <Route path="/chat" element={<Chat />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </TooltipProvider>
+      </BrowserRouter>
+    </AuthProvider>
+  </ErrorBoundary>
 )
 
 export default App

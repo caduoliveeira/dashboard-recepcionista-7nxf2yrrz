@@ -31,6 +31,8 @@ import { ShiftHandoverNotes } from '@/components/shift-handover-notes'
 import { shouldShowTask, shouldShowTaskToday, type FilterType } from '@/lib/task-utils'
 import { supabase } from '@/lib/supabase/client'
 
+import { AlertTriangle } from 'lucide-react'
+
 const CATEGORY_ORDER = ['DIÁRIA', 'MANHÃ', 'TARDE', 'NOITE']
 
 const getCategoryOrderIndex = (name: string) => {
@@ -52,6 +54,7 @@ export default function Checklist() {
   const [completions, setCompletions] = useState<TaskCompletion[]>([])
   const [activity, setActivity] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
@@ -97,17 +100,29 @@ export default function Checklist() {
 
   const loadData = async () => {
     setLoading(true)
-    const [tasksRes, catsRes, completionsRes, activityRes] = await Promise.all([
-      fetchTasks(),
-      fetchTaskCategories(),
-      fetchTodayCompletions(),
-      fetchTodayActivity(),
-    ])
-    if (tasksRes.data) setTasks(tasksRes.data)
-    if (catsRes.data) setCategories(catsRes.data)
-    if (completionsRes.data) setCompletions(completionsRes.data)
-    if (activityRes.data) setActivity(activityRes.data)
-    setLoading(false)
+    setError(false)
+    try {
+      const [tasksRes, catsRes, completionsRes, activityRes] = await Promise.all([
+        fetchTasks(),
+        fetchTaskCategories(),
+        fetchTodayCompletions(),
+        fetchTodayActivity(),
+      ])
+
+      if (tasksRes.error || catsRes.error || completionsRes.error || activityRes.error) {
+        setError(true)
+      } else {
+        if (tasksRes.data) setTasks(tasksRes.data)
+        if (catsRes.data) setCategories(catsRes.data)
+        if (completionsRes.data) setCompletions(completionsRes.data)
+        if (activityRes.data) setActivity(activityRes.data)
+      }
+    } catch (err) {
+      console.error(err)
+      setError(true)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleComplete = async (taskId: string) => {
@@ -174,24 +189,44 @@ export default function Checklist() {
   )
 
   const columns = useMemo(() => {
-    const sortedCategories = [...categories].sort((a, b) => {
-      const aIdx = getCategoryOrderIndex(a.name)
-      const bIdx = getCategoryOrderIndex(b.name)
-      if (aIdx !== bIdx) return aIdx - bIdx
-      const aStart = a.start_time || '24:00'
-      const bStart = b.start_time || '24:00'
-      return aStart.localeCompare(bStart)
+    const predefinedCols = CATEGORY_ORDER.map((name) => {
+      const cat = categories.find((c) => c.name.toUpperCase().includes(name))
+      const catTasks = filteredTasks.filter((t) => {
+        if (cat) return t.category_id === cat.id
+        return t.category?.toUpperCase().includes(name)
+      })
+      return {
+        name,
+        category:
+          cat || ({ id: `dummy-${name}`, name, start_time: null, end_time: null } as TaskCategory),
+        catTasks,
+      }
     })
 
-    const cols = sortedCategories.map((cat) => ({
+    const otherCats = categories.filter(
+      (c) => !CATEGORY_ORDER.some((name) => c.name.toUpperCase().includes(name)),
+    )
+    const others = otherCats.map((cat) => ({
+      name: cat.name,
       category: cat,
       catTasks: filteredTasks.filter((t) => t.category_id === cat.id),
     }))
-    const uncategorized = filteredTasks.filter((t) => !t.category_id)
+
+    const uncategorized = filteredTasks.filter((t) => {
+      if (t.category_id) return false
+      return !CATEGORY_ORDER.some((name) => t.category?.toUpperCase().includes(name))
+    })
+
+    const allCols = [...predefinedCols, ...others]
     if (uncategorized.length > 0) {
-      cols.push({ category: null, catTasks: uncategorized })
+      allCols.push({
+        name: 'GERAL',
+        category: null as unknown as TaskCategory,
+        catTasks: uncategorized,
+      })
     }
-    return cols
+
+    return allCols
   }, [categories, filteredTasks])
 
   if (loading) {
@@ -205,6 +240,27 @@ export default function Checklist() {
           <Skeleton className="h-[400px] rounded-2xl bg-white/5" />
           <Skeleton className="h-[400px] rounded-2xl bg-white/5" />
         </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+        <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center border border-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.15)]">
+          <AlertTriangle className="h-8 w-8" />
+        </div>
+        <h2 className="text-2xl font-bold text-white tracking-tight">Falha ao carregar tarefas</h2>
+        <p className="text-white/50 max-w-md text-sm leading-relaxed">
+          Não foi possível carregar os dados do servidor. Por favor, verifique sua conexão ou tente
+          novamente.
+        </p>
+        <Button
+          onClick={loadData}
+          className="mt-4 gap-2 bg-white/10 hover:bg-white/20 text-white border-white/20"
+        >
+          Tentar Novamente
+        </Button>
       </div>
     )
   }
@@ -265,8 +321,8 @@ export default function Checklist() {
           <ActivityFeed items={activity} />
         </div>
       ) : (
-        <div className="flex flex-col gap-8">
-          <div className="flex gap-6 overflow-x-auto pb-4 snap-x scrollbar-thin lg:grid lg:grid-cols-4 lg:overflow-visible lg:pb-0 items-start">
+        <div className="flex flex-col gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
             {columns.map((col) => {
               const completedCount = col.catTasks.filter((t) => completedIds.has(t.id)).length
               const total = col.catTasks.length
@@ -274,18 +330,18 @@ export default function Checklist() {
               const progress = total > 0 ? (completedCount / total) * 100 : 0
               return (
                 <Card
-                  key={col.category?.id || 'general'}
+                  key={col.category?.id || col.name}
                   className={cn(
-                    'shadow-[0_8px_32px_rgba(0,0,0,0.4)] border-white/5 bg-[#0a0a0a]/80 backdrop-blur-2xl rounded-2xl overflow-hidden flex flex-col transition-all duration-500 h-[75vh] min-h-[400px] max-h-[800px] min-w-[280px] lg:min-w-0 snap-start shrink-0 lg:shrink',
+                    'shadow-[0_8px_32px_rgba(0,0,0,0.4)] border-white/5 bg-[#0a0a0a]/80 backdrop-blur-2xl rounded-2xl flex flex-col transition-all duration-500 h-[calc(100vh-300px)] min-h-[400px]',
                     isAllCompleted &&
                       total > 0 &&
                       'border-primary/40 shadow-[0_8px_40px_rgba(128,0,32,0.15)] bg-gradient-to-b from-primary/[0.03] to-[#0a0a0a]/80',
                   )}
                 >
-                  <CardHeader className="p-6 border-b border-white/5 bg-white/[0.01]">
+                  <CardHeader className="p-5 border-b border-white/5 bg-white/[0.01] shrink-0">
                     <div className="flex justify-between items-start">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                           <CheckCircle2
                             className={cn(
                               'h-5 w-5 transition-colors duration-500',
@@ -294,12 +350,12 @@ export default function Checklist() {
                                 : 'text-white/20',
                             )}
                           />
-                          <CardTitle className="text-xl font-bold font-display uppercase tracking-widest text-foreground">
-                            {col.category ? col.category.name : 'Geral'}
+                          <CardTitle className="text-lg font-bold font-display uppercase tracking-widest text-foreground">
+                            {col.name}
                           </CardTitle>
                         </div>
-                        {col.category && (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/5 text-[11px] font-semibold text-white/50 ml-8 tracking-wider">
+                        {col.category?.start_time && col.category?.end_time && (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] font-semibold text-white/50 ml-7 tracking-wider">
                             {formatTimeRange(col.category.start_time, col.category.end_time)}
                           </div>
                         )}
@@ -325,21 +381,29 @@ export default function Checklist() {
                       />
                     )}
                   </CardHeader>
-                  <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
-                    <ul className="flex-1 flex flex-col overflow-y-auto scrollbar-thin">
-                      {col.catTasks.map((task) => (
-                        <ChecklistTaskItem
-                          key={task.id}
-                          task={task}
-                          completion={completions.find((c) => c.task_id === task.id)}
-                          onComplete={handleComplete}
-                          onDelete={handleDelete}
-                          canDelete={role === 'owner'}
-                        />
-                      ))}
-                    </ul>
-                    {col.category && (
-                      <div className="mt-auto border-t border-white/5">
+                  <CardContent className="p-0 flex-1 flex flex-col overflow-hidden relative rounded-b-2xl">
+                    <div className="flex-1 overflow-y-auto scrollbar-thin absolute inset-0 w-full">
+                      {col.catTasks.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full p-6 text-center text-white/30 text-sm">
+                          <p>Nenhuma tarefa agendada.</p>
+                        </div>
+                      ) : (
+                        <ul className="flex flex-col pb-16">
+                          {col.catTasks.map((task) => (
+                            <ChecklistTaskItem
+                              key={task.id}
+                              task={task}
+                              completion={completions.find((c) => c.task_id === task.id)}
+                              onComplete={handleComplete}
+                              onDelete={handleDelete}
+                              canDelete={role === 'owner'}
+                            />
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    {col.category && col.category.id && !col.category.id.startsWith('dummy-') && (
+                      <div className="absolute bottom-0 left-0 right-0 border-t border-white/5 bg-[#0a0a0a]/95 backdrop-blur-md">
                         <ShiftHandoverNotes categoryId={col.category.id} userId={user?.id} />
                       </div>
                     )}
@@ -348,7 +412,10 @@ export default function Checklist() {
               )
             })}
           </div>
-          <ActivityFeed items={activity} />
+
+          <div className="w-full mt-4">
+            <ActivityFeed items={activity} />
+          </div>
         </div>
       )}
 

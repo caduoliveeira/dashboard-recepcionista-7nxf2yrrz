@@ -115,20 +115,27 @@ export function ChecklistTaskItem({
 
           {task.description && (
             <div className="mt-2">
-              <p
-                ref={descRef}
+              <div
                 className={cn(
-                  'text-xs leading-relaxed transition-all duration-300',
-                  isCompleted ? 'text-white/20' : 'text-white/50 group-hover:text-white/70',
-                  !descExpanded && 'line-clamp-2',
+                  'transition-all duration-300 overflow-hidden',
+                  descExpanded ? 'max-h-[500px]' : 'max-h-[3rem]',
                 )}
               >
-                {task.description}
-              </p>
+                <p
+                  ref={descRef}
+                  className={cn(
+                    'text-xs leading-relaxed',
+                    isCompleted ? 'text-white/20' : 'text-white/50 group-hover:text-white/70',
+                    !descExpanded && 'line-clamp-2',
+                  )}
+                >
+                  {task.description}
+                </p>
+              </div>
               {(isOverflowing || descExpanded) && (
                 <button
                   onClick={() => setDescExpanded((v) => !v)}
-                  className="mt-1 inline-flex items-center gap-0.5 text-[11px] font-semibold text-primary/70 hover:text-primary transition-colors duration-300"
+                  className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-white/40 hover:text-primary transition-colors duration-300"
                 >
                   {descExpanded ? (
                     <>
