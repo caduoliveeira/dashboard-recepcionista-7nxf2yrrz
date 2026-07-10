@@ -189,6 +189,7 @@ export type Database = {
           created_by: string | null
           id: string
           is_purchased: boolean
+          is_urgent: boolean
           item_name: string
         }
         Insert: {
@@ -196,6 +197,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_purchased?: boolean
+          is_urgent?: boolean
           item_name: string
         }
         Update: {
@@ -203,6 +205,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_purchased?: boolean
+          is_urgent?: boolean
           item_name?: string
         }
         Relationships: [
