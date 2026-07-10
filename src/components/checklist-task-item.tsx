@@ -44,134 +44,128 @@ export function ChecklistTaskItem({
   return (
     <li
       className={cn(
-        'p-4 transition-all duration-300',
-        isCompleted ? 'bg-black/20' : overdue ? 'bg-destructive/10' : 'hover:bg-white/5',
-        !isCompleted &&
-          task.priority === 'High' &&
-          'border-l-2 border-l-red-500 shadow-[inset_4px_0_10px_rgba(239,68,68,0.1)]',
+        'p-5 border-b border-white/5 last:border-0 transition-all duration-300 group hover:bg-white/[0.02] relative',
+        !isCompleted && task.priority === 'High' && 'bg-primary/[0.02]',
+        isCompleted && 'bg-black/10',
       )}
     >
-      <div className="flex items-start gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
+      <div className="flex gap-4">
+        <button
           onClick={() => onComplete(task.id)}
           disabled={isCompleted}
           className={cn(
-            'h-8 w-8 mt-0.5 shrink-0 transition-all rounded-full border border-transparent',
+            'shrink-0 mt-0.5 transition-all duration-300 rounded-full flex items-center justify-center h-6 w-6 border',
             isCompleted
-              ? 'text-primary opacity-100 shadow-glow-sm'
-              : 'text-muted-foreground hover:text-primary hover:bg-primary/10 hover:border-primary/30',
+              ? 'border-primary bg-primary text-white shadow-glow-sm'
+              : 'border-white/20 text-transparent hover:border-primary/50',
           )}
         >
-          {isCompleted ? (
-            <CheckCircle2 className="h-7 w-7 drop-shadow-[0_0_8px_rgba(128,0,32,0.6)]" />
-          ) : (
-            <Circle className="h-7 w-7 stroke-[1.5]" />
-          )}
-        </Button>
-        <div className="space-y-1.5 flex-1 pt-1">
-          <div className="flex items-start justify-between gap-2">
-            <p
+          {isCompleted && <CheckCircle2 className="h-6 w-6" />}
+        </button>
+
+        <div className="flex-1 min-w-0 flex flex-col">
+          <div className="flex items-start justify-between gap-3">
+            <span
               className={cn(
-                'font-medium text-[15px] leading-tight transition-all',
-                isCompleted
-                  ? 'text-muted-foreground line-through decoration-muted-foreground/30'
-                  : 'text-foreground',
+                'text-[15px] font-medium leading-snug',
+                isCompleted ? 'text-white/40 line-through decoration-white/30' : 'text-white/90',
               )}
             >
               {task.title}
-            </p>
-            <div className="flex flex-wrap gap-1 shrink-0">
-              {task.instruction_url && (
-                <a
-                  href={task.instruction_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[10px] font-semibold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20 flex items-center gap-1 hover:bg-blue-500/20 transition-colors"
-                >
-                  <FileText className="h-3 w-3" /> Manual
-                </a>
-              )}
+            </span>
+            <div className="flex flex-wrap gap-1.5 shrink-0 justify-end">
               <PriorityBadge priority={task.priority || 'Medium'} />
               {overdue && (
-                <span className="text-[10px] font-semibold text-destructive bg-destructive/10 px-2 py-0.5 rounded-full border border-destructive/20 flex items-center gap-1 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
+                <span className="text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20 flex items-center gap-1 uppercase">
                   <AlertTriangle className="h-3 w-3" /> Atrasada
                 </span>
               )}
               {upcoming && (
-                <span className="text-[10px] font-semibold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20 flex items-center gap-1">
+                <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20 flex items-center gap-1 uppercase">
                   <Timer className="h-3 w-3" /> Proxima
                 </span>
               )}
               {completedLate && (
-                <span className="text-[10px] font-semibold text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full border border-orange-400/20 flex items-center gap-1">
+                <span className="text-[10px] font-bold text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded border border-orange-400/20 flex items-center gap-1 uppercase">
                   <Clock className="h-3 w-3" /> Atraso
                 </span>
               )}
             </div>
           </div>
+
           {task.description && (
             <p
               className={cn(
-                'text-sm transition-all',
-                isCompleted ? 'text-muted-foreground/40' : 'text-muted-foreground/80',
+                'text-xs mt-2 leading-relaxed',
+                isCompleted ? 'text-white/30' : 'text-white/50',
               )}
             >
               {task.description}
             </p>
           )}
-          <div className="flex flex-wrap items-center gap-2 mt-2">
+
+          <div className="flex flex-wrap items-center gap-2 mt-4 text-xs">
             {task.expected_time && (
-              <div
+              <span
                 className={cn(
-                  'flex items-center text-[11px] font-medium px-1.5 py-0.5 rounded border transition-all',
+                  'flex items-center gap-1 px-2 py-1 rounded border font-medium',
                   isCompleted
-                    ? 'text-muted-foreground/50 bg-white/5 border-white/10'
+                    ? 'bg-white/5 border-white/10 text-white/30'
                     : overdue
-                      ? 'text-destructive bg-destructive/10 border-destructive/20'
-                      : 'text-primary/90 bg-primary/10 border-primary/20',
+                      ? 'bg-red-500/10 border-red-500/20 text-red-400'
+                      : 'bg-white/5 border-white/10 text-white/60',
                 )}
               >
-                <Clock className="h-3 w-3 mr-1" />
+                <Clock className="h-3 w-3" />
                 {task.expected_time.slice(0, 5)}
-              </div>
+              </span>
             )}
-            {task.is_recurring && !isCompleted && (
-              <div className="flex items-center gap-1 text-[11px] font-medium text-primary/80 bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
-                <Repeat className="h-3 w-3" />
-                {task.recurrence_type === 'daily' ? 'Diaria' : 'Semanal'}
-              </div>
-            )}
+
             {isCompleted && (
-              <div className="flex items-center gap-1.5 text-[11px] text-primary/80 font-medium bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 shadow-glow-sm">
+              <span className="flex items-center gap-1 px-2 py-1 rounded bg-primary/10 text-primary border border-primary/20 font-medium shadow-glow-sm">
                 ✓{' '}
                 {new Date(completion!.completed_at).toLocaleTimeString('pt-BR', {
                   hour: '2-digit',
                   minute: '2-digit',
                 })}
-              </div>
+              </span>
             )}
+
             {task.is_recurring && !isCompleted && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSkipOpen(true)}
-                className="h-6 px-2 text-[11px] text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 gap-1 transition-all"
-              >
-                <SkipForward className="h-3 w-3" /> Pular
-              </Button>
+              <span className="flex items-center gap-1 px-2 py-1 rounded border border-white/10 bg-white/5 text-white/50 font-medium">
+                <Repeat className="h-3 w-3" />
+                {task.recurrence_type === 'daily' ? 'Diária' : 'Semanal'}
+              </span>
             )}
-            {canDelete && onDelete && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setDeleteOpen(true)}
-                className="h-6 px-2 text-[11px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1 ml-auto transition-all"
-              >
-                <Trash2 className="h-3 w-3" /> Excluir
-              </Button>
-            )}
+
+            <div className="ml-auto flex items-center gap-2">
+              {task.is_recurring && !isCompleted && (
+                <button
+                  onClick={() => setSkipOpen(true)}
+                  className="flex items-center gap-1 px-2 py-1 rounded border border-amber-500/20 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors font-medium"
+                >
+                  <SkipForward className="h-3 w-3" /> Pular
+                </button>
+              )}
+              {task.instruction_url && (
+                <a
+                  href={task.instruction_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 px-2 py-1 rounded border border-blue-500/20 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors font-medium"
+                >
+                  <FileText className="h-3 w-3" /> Manual
+                </a>
+              )}
+              {canDelete && onDelete && (
+                <button
+                  onClick={() => setDeleteOpen(true)}
+                  className="flex items-center gap-1 px-2 py-1 text-white/40 hover:text-white transition-colors"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Excluir
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
