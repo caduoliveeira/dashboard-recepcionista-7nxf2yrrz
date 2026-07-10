@@ -17,7 +17,7 @@ import {
 import { NotificationBell } from '@/components/notification-bell'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import logoImg from '@/assets/02-04684.png'
+import logoImg from '@/assets/06-b2e9d.png'
 
 export default function Layout() {
   const { user, role, loading, signOut } = useAuth()

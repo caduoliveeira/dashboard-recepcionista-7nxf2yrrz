@@ -13,7 +13,7 @@ import {
   CardFooter,
 } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
-import logoImg from '@/assets/02-04684.png'
+import logoImg from '@/assets/06-b2e9d.png'
 import bgImage from '@/assets/whatsapp-image-2026-04-24-at-16.18.57-1-c8e91.jpeg'
 
 export default function Login() {
