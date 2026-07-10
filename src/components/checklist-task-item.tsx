@@ -71,10 +71,10 @@ export function ChecklistTaskItem({
         </button>
 
         <div className="flex-1 min-w-0 flex flex-col">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-1.5">
             <span
               className={cn(
-                'text-[15px] font-medium leading-snug flex-1 break-words transition-colors duration-500',
+                'text-[15px] font-medium leading-snug break-words transition-colors duration-500',
                 isCompleted
                   ? 'text-white/30 line-through decoration-white/20'
                   : 'text-white/90 group-hover:text-white',
@@ -82,7 +82,7 @@ export function ChecklistTaskItem({
             >
               {task.title}
             </span>
-            <div className="flex flex-col sm:flex-row flex-wrap gap-1.5 shrink-0 items-end sm:items-start">
+            <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
               <PriorityBadge priority={task.priority || 'Medium'} />
               {overdue && (
                 <span className="text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20 flex items-center gap-1 uppercase">
@@ -91,7 +91,7 @@ export function ChecklistTaskItem({
               )}
               {upcoming && (
                 <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20 flex items-center gap-1 uppercase">
-                  <Timer className="h-3 w-3" /> Proxima
+                  <Timer className="h-3 w-3" /> Próxima
                 </span>
               )}
               {completedLate && (

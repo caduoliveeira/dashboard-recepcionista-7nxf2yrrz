@@ -166,7 +166,17 @@ export default function Checklist() {
   )
 
   const columns = useMemo(() => {
-    const cols = categories.map((cat) => ({
+    const sortedCategories = [...categories].sort((a, b) => {
+      const aIsDaily = a.name.toLowerCase().includes('diár')
+      const bIsDaily = b.name.toLowerCase().includes('diár')
+      if (aIsDaily && !bIsDaily) return -1
+      if (!aIsDaily && bIsDaily) return 1
+      const aStart = a.start_time || '24:00'
+      const bStart = b.start_time || '24:00'
+      return aStart.localeCompare(bStart)
+    })
+
+    const cols = sortedCategories.map((cat) => ({
       category: cat,
       catTasks: filteredTasks.filter((t) => t.category_id === cat.id),
     }))
@@ -182,7 +192,8 @@ export default function Checklist() {
       <div className="space-y-6">
         <Skeleton className="h-10 w-64 mb-2 bg-white/5" />
         <Skeleton className="h-12 w-full bg-white/5" />
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="h-[400px] rounded-2xl bg-white/5" />
           <Skeleton className="h-[400px] rounded-2xl bg-white/5" />
           <Skeleton className="h-[400px] rounded-2xl bg-white/5" />
           <Skeleton className="h-[400px] rounded-2xl bg-white/5" />
@@ -238,14 +249,17 @@ export default function Checklist() {
       <ChecklistFilterBar value={filter} onChange={setFilter} counts={filterCounts} />
 
       {filteredTasks.length === 0 ? (
-        <Card className="border-dashed border-white/10 bg-transparent">
-          <CardContent className="py-12 text-center text-muted-foreground">
-            Nenhuma tarefa encontrada para este filtro.
-          </CardContent>
-        </Card>
+        <div className="space-y-8">
+          <Card className="border-dashed border-white/10 bg-transparent">
+            <CardContent className="py-12 text-center text-muted-foreground">
+              Nenhuma tarefa encontrada para este filtro.
+            </CardContent>
+          </Card>
+          <ActivityFeed items={activity} />
+        </div>
       ) : (
-        <div className="flex gap-6">
-          <div className="flex-1 grid gap-6 md:grid-cols-2 xl:grid-cols-3 items-stretch">
+        <div className="flex flex-col gap-8">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 items-stretch">
             {columns.map((col) => {
               const completedCount = col.catTasks.filter((t) => completedIds.has(t.id)).length
               const total = col.catTasks.length
@@ -318,7 +332,7 @@ export default function Checklist() {
                       ))}
                     </ul>
                     {col.category && (
-                      <div className="mt-auto">
+                      <div className="mt-auto border-t border-white/5">
                         <ShiftHandoverNotes categoryId={col.category.id} userId={user?.id} />
                       </div>
                     )}
