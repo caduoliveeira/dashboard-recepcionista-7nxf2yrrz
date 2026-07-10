@@ -16,22 +16,22 @@ interface ChecklistFilterBarProps {
 
 export function ChecklistFilterBar({ value, onChange, counts }: ChecklistFilterBarProps) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-3">
       {FILTERS.map((f) => (
         <button
           key={f.value}
           onClick={() => onChange(f.value)}
           className={cn(
-            'px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-300 flex items-center gap-3 border',
+            'px-6 py-2.5 rounded-full text-sm font-bold tracking-wide transition-all duration-300 flex items-center gap-3 border',
             value === f.value
-              ? 'bg-primary text-white shadow-glow-sm border-transparent'
-              : 'bg-transparent text-white/60 border-white/10 hover:bg-white/5 hover:text-white',
+              ? 'bg-primary text-white shadow-[0_4px_20px_rgba(128,0,32,0.4)] border-primary'
+              : 'bg-white/[0.02] text-white/60 border-white/10 hover:bg-white/5 hover:text-white hover:border-white/20',
           )}
         >
           {f.label}
           <span
             className={cn(
-              'text-xs px-2 py-0.5 rounded-full tabular-nums font-bold leading-none',
+              'text-xs px-2.5 py-0.5 rounded-full tabular-nums font-extrabold leading-none',
               value === f.value ? 'bg-black/20 text-white' : 'bg-white/10 text-white/50',
             )}
           >

@@ -44,9 +44,11 @@ export function ChecklistTaskItem({
   return (
     <li
       className={cn(
-        'p-5 border-b border-white/5 last:border-0 transition-all duration-300 group hover:bg-white/[0.02] relative',
+        'p-6 border-b border-white/5 last:border-0 transition-all duration-500 group relative',
+        !isCompleted
+          ? 'hover:bg-white/[0.04] hover:-translate-y-0.5 hover:shadow-[0_4px_20px_rgba(128,0,32,0.1)] hover:border-primary/20 hover:z-10'
+          : 'bg-black/20 opacity-80',
         !isCompleted && task.priority === 'High' && 'bg-primary/[0.02]',
-        isCompleted && 'bg-black/10',
       )}
     >
       <div className="flex gap-4">
@@ -54,26 +56,33 @@ export function ChecklistTaskItem({
           onClick={() => onComplete(task.id)}
           disabled={isCompleted}
           className={cn(
-            'shrink-0 mt-0.5 transition-all duration-300 rounded-full flex items-center justify-center h-6 w-6 border',
+            'shrink-0 mt-0.5 transition-all duration-500 rounded-full flex items-center justify-center h-6 w-6 border',
             isCompleted
-              ? 'border-primary bg-primary text-white shadow-glow-sm'
-              : 'border-white/20 text-transparent hover:border-primary/50',
+              ? 'border-primary bg-primary text-white shadow-[0_0_12px_rgba(128,0,32,0.6)] scale-110'
+              : 'border-white/20 text-transparent hover:border-primary hover:shadow-[0_0_8px_rgba(128,0,32,0.4)]',
           )}
         >
-          {isCompleted && <CheckCircle2 className="h-6 w-6" />}
+          <CheckCircle2
+            className={cn(
+              'h-6 w-6 transition-transform duration-500',
+              isCompleted ? 'scale-100' : 'scale-0',
+            )}
+          />
         </button>
 
         <div className="flex-1 min-w-0 flex flex-col">
           <div className="flex items-start justify-between gap-3">
             <span
               className={cn(
-                'text-[15px] font-medium leading-snug',
-                isCompleted ? 'text-white/40 line-through decoration-white/30' : 'text-white/90',
+                'text-[15px] font-medium leading-snug flex-1 break-words transition-colors duration-500',
+                isCompleted
+                  ? 'text-white/30 line-through decoration-white/20'
+                  : 'text-white/90 group-hover:text-white',
               )}
             >
               {task.title}
             </span>
-            <div className="flex flex-wrap gap-1.5 shrink-0 justify-end">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-1.5 shrink-0 items-end sm:items-start">
               <PriorityBadge priority={task.priority || 'Medium'} />
               {overdue && (
                 <span className="text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20 flex items-center gap-1 uppercase">
@@ -96,8 +105,8 @@ export function ChecklistTaskItem({
           {task.description && (
             <p
               className={cn(
-                'text-xs mt-2 leading-relaxed',
-                isCompleted ? 'text-white/30' : 'text-white/50',
+                'text-xs mt-2 leading-relaxed transition-colors duration-500',
+                isCompleted ? 'text-white/20' : 'text-white/50 group-hover:text-white/70',
               )}
             >
               {task.description}
@@ -108,12 +117,12 @@ export function ChecklistTaskItem({
             {task.expected_time && (
               <span
                 className={cn(
-                  'flex items-center gap-1 px-2 py-1 rounded border font-medium',
+                  'flex items-center gap-1 px-2 py-1 rounded border font-medium transition-colors duration-500',
                   isCompleted
-                    ? 'bg-white/5 border-white/10 text-white/30'
+                    ? 'bg-transparent border-transparent text-primary/50'
                     : overdue
                       ? 'bg-red-500/10 border-red-500/20 text-red-400'
-                      : 'bg-white/5 border-white/10 text-white/60',
+                      : 'bg-white/5 border-white/10 text-white/60 group-hover:border-white/20',
                 )}
               >
                 <Clock className="h-3 w-3" />

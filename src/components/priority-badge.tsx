@@ -6,7 +6,8 @@ export function PriorityBadge({ priority }: { priority: string }) {
   const config: Record<string, { icon: typeof AlertTriangle; className: string; label: string }> = {
     High: {
       icon: AlertTriangle,
-      className: 'bg-primary/5 text-primary border-primary/30',
+      className:
+        'bg-primary/[0.05] text-[#ff4d4d] border-primary/20 shadow-[0_0_10px_rgba(128,0,32,0.1)]',
       label: 'ALTA PRIORIDADE',
     },
     Medium: {
@@ -31,11 +32,11 @@ export function PriorityBadge({ priority }: { priority: string }) {
     <Badge
       variant="outline"
       className={cn(
-        'text-[10px] font-bold tracking-wide gap-1 px-2 py-0.5 rounded border uppercase',
+        'text-[9px] font-extrabold tracking-widest gap-1 px-2 py-0.5 rounded-full border uppercase transition-colors',
         c.className,
       )}
     >
-      <Icon className="h-3 w-3" strokeWidth={2} /> {c.label}
+      <Icon className="h-3 w-3" strokeWidth={2.5} /> {c.label}
     </Badge>
   )
 }

@@ -192,23 +192,26 @@ export default function Checklist() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-white/10">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold tracking-[0.2em] uppercase mb-2 shadow-glow-sm">
-            <CheckCircle2 className="h-3 w-3" />
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -z-10 pointer-events-none opacity-50" />
+      <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] -z-10 pointer-events-none opacity-50" />
+
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-white/5">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/[0.08] text-primary border border-primary/20 text-[10px] font-extrabold tracking-widest uppercase mb-1 shadow-[0_0_15px_rgba(128,0,32,0.15)]">
+            <CheckCircle2 className="h-3.5 w-3.5" />
             Operação Diária
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-foreground font-display">
+          <h1 className="text-4xl font-extrabold tracking-tight text-white font-display">
             Checklist de Rotina
           </h1>
-          <p className="text-muted-foreground font-medium tracking-wide text-sm">
+          <p className="text-white/50 font-medium tracking-wide text-sm">
             Gestão e acompanhamento das tarefas e processos do clube.
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0 flex-wrap">
-          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground bg-card/60 backdrop-blur-xl px-4 py-2.5 rounded-xl border border-white/10 shadow-sm hidden sm:flex">
-            <Clock className="h-4 w-4 text-primary drop-shadow-glow" />
+          <div className="flex items-center gap-2 text-xs font-medium text-white/50 bg-[#0a0a0a]/80 backdrop-blur-2xl px-5 py-2.5 rounded-full border border-white/10 shadow-sm hidden sm:flex">
+            <Clock className="h-4 w-4 text-primary" />
             {new Date().toLocaleDateString('pt-BR', {
               weekday: 'long',
               day: 'numeric',
@@ -219,20 +222,19 @@ export default function Checklist() {
             <Button
               variant="outline"
               onClick={() => setCategoryModalOpen(true)}
-              className="gap-2 h-10 px-5 rounded-xl bg-transparent border-white/20 hover:bg-white/5 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition-all"
+              className="gap-2 h-10 px-6 rounded-full bg-transparent border-white/20 hover:bg-white/5 hover:border-white/30 text-xs font-bold uppercase tracking-wider text-white transition-all duration-300"
             >
               <Settings2 className="h-4 w-4" /> Configurar Turnos
             </Button>
           )}
           <Button
             onClick={() => setModalOpen(true)}
-            className="gap-2 h-10 px-6 rounded-xl shadow-glow-sm bg-primary hover:bg-primary/90 text-white font-bold tracking-wider text-xs uppercase border-none"
+            className="gap-2 h-10 px-6 rounded-full shadow-[0_4px_20px_rgba(128,0,32,0.4)] bg-primary hover:bg-primary/90 text-white font-bold tracking-wider text-xs uppercase border-none transition-all duration-300 hover:scale-105"
           >
             <Plus className="h-4 w-4" strokeWidth={3} /> Nova Tarefa
           </Button>
         </div>
       </div>
-
       <ChecklistFilterBar value={filter} onChange={setFilter} counts={filterCounts} />
 
       {filteredTasks.length === 0 ? (
@@ -243,7 +245,7 @@ export default function Checklist() {
         </Card>
       ) : (
         <div className="flex gap-6">
-          <div className="flex-1 grid gap-6 md:grid-cols-2 xl:grid-cols-3 items-start">
+          <div className="flex-1 grid gap-6 md:grid-cols-2 xl:grid-cols-3 items-stretch">
             {columns.map((col) => {
               const completedCount = col.catTasks.filter((t) => completedIds.has(t.id)).length
               const total = col.catTasks.length
@@ -253,57 +255,57 @@ export default function Checklist() {
                 <Card
                   key={col.category?.id || 'general'}
                   className={cn(
-                    'shadow-glass border-white/5 bg-card/40 backdrop-blur-xl rounded-2xl overflow-hidden flex flex-col transition-all duration-500',
+                    'shadow-[0_8px_32px_rgba(0,0,0,0.4)] border-white/5 bg-[#0a0a0a]/80 backdrop-blur-2xl rounded-2xl overflow-hidden flex flex-col transition-all duration-500 h-full',
                     isAllCompleted &&
                       total > 0 &&
-                      'border-primary/30 shadow-[0_8px_30px_rgba(224,30,55,0.1)]',
+                      'border-primary/40 shadow-[0_8px_40px_rgba(128,0,32,0.15)] bg-gradient-to-b from-primary/[0.03] to-[#0a0a0a]/80',
                   )}
                 >
-                  <CardHeader className="p-5 border-b border-white/5 bg-white/[0.02]">
+                  <CardHeader className="p-6 border-b border-white/5 bg-white/[0.01]">
                     <div className="flex justify-between items-start">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                           <CheckCircle2
                             className={cn(
-                              'h-5 w-5 transition-colors',
+                              'h-5 w-5 transition-colors duration-500',
                               isAllCompleted && total > 0
-                                ? 'text-primary drop-shadow-glow'
+                                ? 'text-primary drop-shadow-[0_0_8px_rgba(128,0,32,0.8)]'
                                 : 'text-white/20',
                             )}
                           />
-                          <CardTitle className="text-xl font-bold font-display uppercase tracking-wide text-foreground">
+                          <CardTitle className="text-xl font-bold font-display uppercase tracking-widest text-foreground">
                             {col.category ? col.category.name : 'Geral'}
                           </CardTitle>
                         </div>
                         {col.category && (
-                          <p className="text-xs font-medium text-white/40 ml-7">
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/5 text-[11px] font-semibold text-white/50 ml-8 tracking-wider">
                             {formatTimeRange(col.category.start_time, col.category.end_time)}
-                          </p>
+                          </div>
                         )}
                       </div>
                       <div
                         className={cn(
-                          'flex items-center justify-center h-10 w-10 rounded-full text-xs font-bold shadow-sm transition-colors shrink-0',
+                          'flex items-center justify-center h-11 w-11 rounded-full text-xs font-bold transition-all duration-500 shrink-0',
                           total > 0 && isAllCompleted
-                            ? 'bg-primary text-white shadow-glow-sm'
+                            ? 'bg-primary text-white shadow-[0_0_15px_rgba(128,0,32,0.5)] scale-105'
                             : 'bg-white/5 text-white/40 border border-white/10',
                         )}
                       >
-                        <span className="flex flex-col items-center leading-[0.85] pt-0.5">
-                          <span>{completedCount}/</span>
-                          <span>{total}</span>
+                        <span className="flex flex-col items-center leading-[0.85]">
+                          <span className="text-[13px]">{completedCount}/</span>
+                          <span className="text-[10px] opacity-70">{total}</span>
                         </span>
                       </div>
                     </div>
                     {total > 0 && (
                       <Progress
                         value={progress}
-                        className="h-1 mt-4 bg-white/5 [&>div]:bg-primary"
+                        className="h-1.5 mt-5 bg-white/5 [&>div]:bg-primary overflow-hidden rounded-full shadow-inner"
                       />
                     )}
                   </CardHeader>
-                  <CardContent className="p-0 bg-transparent flex-1 flex flex-col">
-                    <ul className="flex-1">
+                  <CardContent className="p-0 flex-1 flex flex-col">
+                    <ul className="flex-1 flex flex-col">
                       {col.catTasks.map((task) => (
                         <ChecklistTaskItem
                           key={task.id}
