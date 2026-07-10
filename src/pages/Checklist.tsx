@@ -193,16 +193,22 @@ export default function Checklist() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Checklist Diário</h1>
-          <p className="text-muted-foreground mt-1">
-            Marque as tarefas conforme forem concluídas na sua rotina.
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200/60">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold tracking-[0.2em] uppercase mb-2">
+            <CheckCircle2 className="h-3 w-3" />
+            Operação Diária
+          </div>
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 font-display">
+            Checklist de Rotina
+          </h1>
+          <p className="text-slate-500 font-medium tracking-wide text-sm">
+            Gestão e acompanhamento das tarefas e processos do clube.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border">
-            <Clock className="h-4 w-4" />
+        <div className="flex items-center gap-3 shrink-0 flex-wrap">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm hidden sm:flex">
+            <Clock className="h-4 w-4 text-primary" />
             {new Date().toLocaleDateString('pt-BR', {
               weekday: 'long',
               day: 'numeric',
@@ -210,12 +216,19 @@ export default function Checklist() {
             })}
           </div>
           {role === 'owner' && (
-            <Button variant="outline" onClick={() => setCategoryModalOpen(true)} className="gap-2">
-              <Settings2 className="h-4 w-4" /> Turnos
+            <Button
+              variant="outline"
+              onClick={() => setCategoryModalOpen(true)}
+              className="gap-2 h-10 px-5 rounded-xl bg-white hover:bg-slate-50 border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-700 shadow-sm"
+            >
+              <Settings2 className="h-4 w-4" /> Configurar Turnos
             </Button>
           )}
-          <Button onClick={() => setModalOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" /> Nova Tarefa
+          <Button
+            onClick={() => setModalOpen(true)}
+            className="gap-2 h-10 px-6 rounded-xl shadow-glow bg-primary hover:bg-primary/90 text-white font-semibold tracking-wider text-xs uppercase"
+          >
+            <Plus className="h-4 w-4" strokeWidth={3} /> Nova Tarefa
           </Button>
         </div>
       </div>
@@ -240,31 +253,47 @@ export default function Checklist() {
                 <Card
                   key={col.category?.id || 'general'}
                   className={cn(
-                    'shadow-sm transition-all duration-300',
-                    isAllCompleted && 'border-primary/50 bg-primary/5',
+                    'shadow-elevation border-slate-200/60 transition-all duration-500 rounded-2xl overflow-hidden bg-white',
+                    isAllCompleted &&
+                      'border-primary/30 shadow-[0_10px_40px_-10px_rgba(128,0,32,0.1)]',
                   )}
                 >
-                  <CardHeader className="border-b bg-card pb-4 space-y-2">
-                    <CardTitle className="text-lg font-semibold flex items-center justify-between">
+                  <div
+                    className={cn(
+                      'h-1.5 w-full transition-all duration-500',
+                      isAllCompleted ? 'bg-primary' : 'bg-slate-100',
+                    )}
+                  />
+                  <CardHeader className="border-b border-slate-100 bg-white pb-5 pt-5 space-y-4">
+                    <CardTitle className="text-xl font-bold font-display flex items-center justify-between tracking-tight text-slate-800">
                       <span className="flex items-center gap-2 flex-wrap">
-                        {isAllCompleted && <CheckCircle2 className="h-5 w-5 text-primary" />}
+                        {isAllCompleted && (
+                          <CheckCircle2 className="h-6 w-6 text-primary" strokeWidth={2.5} />
+                        )}
                         {col.category ? col.category.name : 'Geral'}
                         {col.category && (
-                          <span className="text-xs font-normal text-muted-foreground">
+                          <span className="text-xs font-semibold tracking-widest uppercase text-slate-400 bg-slate-50 px-2 py-1 rounded-md ml-2">
                             {formatTimeRange(col.category.start_time, col.category.end_time)}
                           </span>
                         )}
                       </span>
                       <Badge
                         variant={isAllCompleted ? 'default' : 'secondary'}
-                        className={cn('ml-auto', isAllCompleted && 'bg-primary')}
+                        className={cn(
+                          'ml-auto text-xs font-bold px-3 py-1 rounded-full shadow-sm',
+                          isAllCompleted
+                            ? 'bg-primary text-white'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                        )}
                       >
                         {completedCount} / {total}
                       </Badge>
                     </CardTitle>
-                    {total > 0 && <Progress value={progress} className="h-1.5" />}
+                    {total > 0 && (
+                      <Progress value={progress} className="h-2 bg-slate-100 [&>div]:bg-primary" />
+                    )}
                   </CardHeader>
-                  <CardContent className="p-0">
+                  <CardContent className="p-0 bg-slate-50/30">
                     <ul className="divide-y">
                       {col.catTasks.map((task) => (
                         <ChecklistTaskItem

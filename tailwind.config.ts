@@ -92,8 +92,9 @@ export default {
         height: 'height',
       },
       boxShadow: {
-        subtle: '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)',
-        elevation: '0 4px 20px rgba(0, 0, 0, 0.05)',
+        subtle: '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+        elevation: '0 10px 40px -10px rgba(0, 0, 0, 0.08), 0 4px 10px -5px rgba(0, 0, 0, 0.04)',
+        glow: '0 0 20px rgba(128, 0, 32, 0.3)',
       },
       transitionTimingFunction: {
         apple: 'cubic-bezier(0.42, 0, 0.58, 1)',
