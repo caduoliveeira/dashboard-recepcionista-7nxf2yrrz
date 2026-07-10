@@ -1,5 +1,18 @@
 import { supabase } from '@/lib/supabase/client'
 
+export const fetchTodaySkippedTaskIds = async () => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const { data, error } = await supabase
+    .from('task_exceptions')
+    .select('task_id')
+    .gte('skipped_at', today.toISOString())
+
+  const taskIds = (data || []).map((item: { task_id: string }) => item.task_id)
+  return { data: taskIds, error }
+}
+
 export const skipTask = async (taskId: string, reason: string, userId: string) => {
   const { data: taskData } = await supabase.from('tasks').select('title').eq('id', taskId).single()
   const taskTitle = taskData?.title || 'Tarefa'
