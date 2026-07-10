@@ -6,17 +6,17 @@ export function PriorityBadge({ priority }: { priority: string }) {
   const config: Record<string, { icon: typeof AlertTriangle; className: string; label: string }> = {
     High: {
       icon: AlertTriangle,
-      className: 'bg-rose-50 text-rose-700 border-rose-200/60 shadow-sm',
+      className: 'bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-glow-sm',
       label: 'ALTA PRIORIDADE',
     },
     Medium: {
       icon: Minus,
-      className: 'bg-amber-50 text-amber-700 border-amber-200/60 shadow-sm',
+      className: 'bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-sm',
       label: 'MÉDIA',
     },
     Low: {
       icon: ArrowDown,
-      className: 'bg-slate-50 text-slate-600 border-slate-200/60 shadow-sm',
+      className: 'bg-white/5 text-white/50 border-white/10 shadow-sm',
       label: 'BAIXA',
     },
   }

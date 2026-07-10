@@ -22,17 +22,17 @@ export function ChecklistFilterBar({ value, onChange, counts }: ChecklistFilterB
           key={f.value}
           onClick={() => onChange(f.value)}
           className={cn(
-            'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2',
+            'px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2 border',
             value === f.value
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'bg-muted text-muted-foreground hover:bg-accent hover:text-foreground',
+              ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-glow border-primary/50'
+              : 'bg-card/50 backdrop-blur-sm text-muted-foreground border-white/10 hover:bg-white/10 hover:text-foreground hover:border-white/20',
           )}
         >
           {f.label}
           <span
             className={cn(
-              'text-xs px-1.5 py-0.5 rounded-full tabular-nums',
-              value === f.value ? 'bg-primary-foreground/20' : 'bg-background',
+              'text-xs px-1.5 py-0.5 rounded-full tabular-nums font-bold',
+              value === f.value ? 'bg-black/20 text-white' : 'bg-black/40 text-muted-foreground',
             )}
           >
             {counts[f.value]}

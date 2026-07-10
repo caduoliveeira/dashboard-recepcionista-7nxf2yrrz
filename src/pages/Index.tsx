@@ -107,35 +107,35 @@ export default function Index() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-10 w-64 bg-white/5" />
         <div className="grid gap-4 md:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-32" />
+            <Skeleton key={i} className="h-32 bg-white/5" />
           ))}
         </div>
-        <Skeleton className="h-64" />
+        <Skeleton className="h-64 bg-white/5" />
       </div>
     )
   }
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200/60">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-white/10">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold tracking-[0.2em] uppercase mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold tracking-[0.2em] uppercase mb-2 shadow-glow-sm">
             <Target className="h-3 w-3" />
             Performance Global
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 font-display">
+          <h1 className="text-4xl font-extrabold tracking-tight text-foreground font-display">
             Dashboard de Pontualidade
           </h1>
-          <p className="text-slate-500 font-medium tracking-wide text-sm">
+          <p className="text-muted-foreground font-medium tracking-wide text-sm">
             Visão gerencial da performance e eficiência operacional da equipe.
           </p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm">
-            <Clock className="h-4 w-4 text-primary" />
+        <div className="flex items-center gap-3 shrink-0 flex-wrap">
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground bg-card/60 backdrop-blur-xl px-4 py-2.5 rounded-xl border border-white/10 shadow-sm">
+            <Clock className="h-4 w-4 text-primary drop-shadow-glow" />
             {new Date().toLocaleDateString('pt-BR', {
               weekday: 'long',
               day: 'numeric',
@@ -144,7 +144,7 @@ export default function Index() {
           </div>
           <Button
             onClick={() => setSettingsOpen(true)}
-            className="gap-2 h-10 px-6 rounded-xl shadow-glow bg-primary hover:bg-primary/90 text-white font-semibold tracking-wider text-xs uppercase"
+            className="gap-2 h-10 px-6 rounded-xl shadow-glow bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white font-semibold tracking-wider text-xs uppercase border border-primary/50"
           >
             <Target className="h-4 w-4" /> Ajustar Metas
           </Button>
@@ -173,16 +173,16 @@ export default function Index() {
         onSaved={setTargetRate}
       />
 
-      <Card className="shadow-elevation border-slate-200/60 rounded-2xl overflow-hidden bg-white">
-        <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-5 pt-6">
-          <CardTitle className="font-display text-xl font-bold tracking-tight text-slate-800">
+      <Card className="shadow-glass border-white/10 rounded-2xl overflow-hidden bg-card/60 backdrop-blur-xl">
+        <CardHeader className="border-b border-white/5 bg-white/[0.02] pb-5 pt-6">
+          <CardTitle className="font-display text-xl font-bold tracking-tight text-foreground">
             Resumo Operacional
           </CardTitle>
-          <CardDescription className="text-xs font-semibold tracking-wider uppercase text-slate-500">
+          <CardDescription className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">
             Progresso de hoje agrupado por período.
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-8 space-y-6">
+        <CardContent className="pt-8 space-y-6 bg-transparent">
           {['Opening', 'Shift', 'Closing'].map((cat) => {
             const catTasks = tasks.filter((t) => t.category === cat)
             if (catTasks.length === 0) return null
@@ -193,19 +193,19 @@ export default function Index() {
             return (
               <div key={cat} className="space-y-3 group">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-bold text-slate-700 tracking-wide">
+                  <span className="text-sm font-bold text-foreground tracking-wide">
                     {CATEGORY_LABELS[cat]}
                   </span>
                   <Badge
-                    variant="secondary"
-                    className="text-xs font-bold px-3 py-1 bg-slate-100 text-slate-600 rounded-full shadow-sm"
+                    variant="outline"
+                    className="text-xs font-bold px-3 py-1 bg-white/5 text-muted-foreground border-white/10 rounded-full shadow-sm"
                   >
                     {catCompleted} / {catTasks.length}
                   </Badge>
                 </div>
                 <Progress
                   value={catProgress}
-                  className="h-2.5 bg-slate-100 [&>div]:bg-primary transition-all group-hover:opacity-90"
+                  className="h-2 bg-white/5 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-primary/80 transition-all group-hover:opacity-90 shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]"
                 />
               </div>
             )

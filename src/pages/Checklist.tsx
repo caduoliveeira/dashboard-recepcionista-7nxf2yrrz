@@ -180,12 +180,12 @@ export default function Checklist() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-10 w-64 mb-2" />
-        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-10 w-64 mb-2 bg-white/5" />
+        <Skeleton className="h-12 w-full bg-white/5" />
         <div className="grid gap-6 md:grid-cols-3">
-          <Skeleton className="h-[400px] rounded-xl" />
-          <Skeleton className="h-[400px] rounded-xl" />
-          <Skeleton className="h-[400px] rounded-xl" />
+          <Skeleton className="h-[400px] rounded-2xl bg-white/5" />
+          <Skeleton className="h-[400px] rounded-2xl bg-white/5" />
+          <Skeleton className="h-[400px] rounded-2xl bg-white/5" />
         </div>
       </div>
     )
@@ -193,22 +193,22 @@ export default function Checklist() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200/60">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-white/10">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold tracking-[0.2em] uppercase mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold tracking-[0.2em] uppercase mb-2 shadow-glow-sm">
             <CheckCircle2 className="h-3 w-3" />
             Operação Diária
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 font-display">
+          <h1 className="text-4xl font-extrabold tracking-tight text-foreground font-display">
             Checklist de Rotina
           </h1>
-          <p className="text-slate-500 font-medium tracking-wide text-sm">
+          <p className="text-muted-foreground font-medium tracking-wide text-sm">
             Gestão e acompanhamento das tarefas e processos do clube.
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0 flex-wrap">
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm hidden sm:flex">
-            <Clock className="h-4 w-4 text-primary" />
+          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground bg-card/60 backdrop-blur-xl px-4 py-2.5 rounded-xl border border-white/10 shadow-sm hidden sm:flex">
+            <Clock className="h-4 w-4 text-primary drop-shadow-glow" />
             {new Date().toLocaleDateString('pt-BR', {
               weekday: 'long',
               day: 'numeric',
@@ -219,14 +219,14 @@ export default function Checklist() {
             <Button
               variant="outline"
               onClick={() => setCategoryModalOpen(true)}
-              className="gap-2 h-10 px-5 rounded-xl bg-white hover:bg-slate-50 border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-700 shadow-sm"
+              className="gap-2 h-10 px-5 rounded-xl bg-card/60 backdrop-blur-xl border-white/10 hover:bg-white/10 text-xs font-bold uppercase tracking-wider text-foreground shadow-sm transition-all"
             >
               <Settings2 className="h-4 w-4" /> Configurar Turnos
             </Button>
           )}
           <Button
             onClick={() => setModalOpen(true)}
-            className="gap-2 h-10 px-6 rounded-xl shadow-glow bg-primary hover:bg-primary/90 text-white font-semibold tracking-wider text-xs uppercase"
+            className="gap-2 h-10 px-6 rounded-xl shadow-glow bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white font-semibold tracking-wider text-xs uppercase border border-primary/50"
           >
             <Plus className="h-4 w-4" strokeWidth={3} /> Nova Tarefa
           </Button>
@@ -236,7 +236,7 @@ export default function Checklist() {
       <ChecklistFilterBar value={filter} onChange={setFilter} counts={filterCounts} />
 
       {filteredTasks.length === 0 ? (
-        <Card className="border-dashed">
+        <Card className="border-dashed border-white/10 bg-transparent">
           <CardContent className="py-12 text-center text-muted-foreground">
             Nenhuma tarefa encontrada para este filtro.
           </CardContent>
@@ -253,48 +253,54 @@ export default function Checklist() {
                 <Card
                   key={col.category?.id || 'general'}
                   className={cn(
-                    'shadow-elevation border-slate-200/60 transition-all duration-500 rounded-2xl overflow-hidden bg-white',
+                    'shadow-glass border-white/10 transition-all duration-500 rounded-2xl overflow-hidden bg-card/60 backdrop-blur-xl',
                     isAllCompleted &&
-                      'border-primary/30 shadow-[0_10px_40px_-10px_rgba(128,0,32,0.1)]',
+                      'border-primary/50 shadow-[0_10px_40px_-10px_rgba(128,0,32,0.3)]',
                   )}
                 >
                   <div
                     className={cn(
                       'h-1.5 w-full transition-all duration-500',
-                      isAllCompleted ? 'bg-primary' : 'bg-slate-100',
+                      isAllCompleted ? 'bg-gradient-to-r from-primary to-primary/50' : 'bg-white/5',
                     )}
                   />
-                  <CardHeader className="border-b border-slate-100 bg-white pb-5 pt-5 space-y-4">
-                    <CardTitle className="text-xl font-bold font-display flex items-center justify-between tracking-tight text-slate-800">
+                  <CardHeader className="border-b border-white/5 bg-white/[0.02] pb-5 pt-5 space-y-4">
+                    <CardTitle className="text-xl font-bold font-display flex items-center justify-between tracking-tight text-foreground">
                       <span className="flex items-center gap-2 flex-wrap">
                         {isAllCompleted && (
-                          <CheckCircle2 className="h-6 w-6 text-primary" strokeWidth={2.5} />
+                          <CheckCircle2
+                            className="h-6 w-6 text-primary drop-shadow-glow"
+                            strokeWidth={2.5}
+                          />
                         )}
                         {col.category ? col.category.name : 'Geral'}
                         {col.category && (
-                          <span className="text-xs font-semibold tracking-widest uppercase text-slate-400 bg-slate-50 px-2 py-1 rounded-md ml-2">
+                          <span className="text-xs font-semibold tracking-widest uppercase text-muted-foreground bg-white/5 border border-white/5 px-2 py-1 rounded-md ml-2">
                             {formatTimeRange(col.category.start_time, col.category.end_time)}
                           </span>
                         )}
                       </span>
                       <Badge
-                        variant={isAllCompleted ? 'default' : 'secondary'}
+                        variant={isAllCompleted ? 'default' : 'outline'}
                         className={cn(
                           'ml-auto text-xs font-bold px-3 py-1 rounded-full shadow-sm',
                           isAllCompleted
-                            ? 'bg-primary text-white'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                            ? 'bg-primary text-white shadow-glow-sm border-transparent'
+                            : 'bg-white/5 text-muted-foreground border-white/10',
                         )}
                       >
                         {completedCount} / {total}
                       </Badge>
                     </CardTitle>
                     {total > 0 && (
-                      <Progress value={progress} className="h-2 bg-slate-100 [&>div]:bg-primary" />
+                      <Progress
+                        value={progress}
+                        className="h-1.5 bg-white/5 [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-primary/80"
+                      />
                     )}
                   </CardHeader>
-                  <CardContent className="p-0 bg-slate-50/30">
-                    <ul className="divide-y">
+                  <CardContent className="p-0 bg-transparent">
+                    <ul className="divide-y divide-white/5">
                       {col.catTasks.map((task) => (
                         <ChecklistTaskItem
                           key={task.id}

@@ -92,9 +92,11 @@ export default {
         height: 'height',
       },
       boxShadow: {
-        subtle: '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
-        elevation: '0 10px 40px -10px rgba(0, 0, 0, 0.08), 0 4px 10px -5px rgba(0, 0, 0, 0.04)',
-        glow: '0 0 20px rgba(128, 0, 32, 0.3)',
+        subtle: '0 4px 20px -2px rgba(0, 0, 0, 0.5)',
+        elevation: '0 10px 40px -10px rgba(0, 0, 0, 0.8), 0 4px 10px -5px rgba(0, 0, 0, 0.5)',
+        glow: '0 0 20px rgba(128, 0, 32, 0.5)',
+        'glow-sm': '0 0 10px rgba(128, 0, 32, 0.3)',
+        glass: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
       },
       transitionTimingFunction: {
         apple: 'cubic-bezier(0.42, 0, 0.58, 1)',
