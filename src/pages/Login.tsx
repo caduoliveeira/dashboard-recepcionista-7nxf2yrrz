@@ -13,8 +13,7 @@ import {
   CardFooter,
 } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
-import logoImg from '@/assets/06-b2e9d.png'
-import bgImage from '@/assets/whatsapp-image-2026-04-24-at-16.18.57-1-c8e91.jpeg'
+import { Dumbbell, Loader2 } from 'lucide-react'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -24,19 +23,13 @@ export default function Login() {
   const navigate = useNavigate()
   const { toast } = useToast()
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#030303]/95 via-[#0a0a0a]/80 to-primary/40 pointer-events-none z-0" />
-        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin shadow-glow relative z-10"></div>
-      </div>
-    )
+  if (user && !loading) {
+    return <Navigate to="/" replace />
   }
-
-  if (user) return <Navigate to="/checklist" replace />
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (loading) return
     setIsLoading(true)
     const { error } = await signIn(email, password)
     if (error) {
@@ -47,54 +40,42 @@ export default function Login() {
         variant: 'destructive',
       })
     } else {
-      navigate('/checklist')
+      navigate('/')
     }
     setIsLoading(false)
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black p-4 relative overflow-hidden">
-      {/* Luxurious Background image overlay */}
-      <div
-        className="absolute inset-0 z-0 opacity-60 mix-blend-overlay"
-        style={{
-          backgroundImage: `url(${bgImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      />
+    <div className="min-h-screen w-full flex items-center justify-center bg-background p-4 relative overflow-hidden selection:bg-primary/20 selection:text-foreground">
+      {/* Background Gradients for image-free stability */}
+      <div className="absolute inset-0 bg-background pointer-events-none z-0" />
+      <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-secondary/30 blur-[120px] rounded-full pointer-events-none" />
 
-      {/* Deep gradient overlay for depth */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#030303]/95 via-[#0a0a0a]/80 to-primary/40 pointer-events-none z-0" />
-
-      <Card className="w-full max-w-md shadow-glass border border-white/10 bg-black/60 backdrop-blur-2xl relative z-10 rounded-3xl overflow-hidden">
-        {/* Top elegant accent line */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
+      <Card className="w-full max-w-md shadow-xl border-border bg-card/90 backdrop-blur-xl relative z-10 rounded-2xl overflow-hidden">
+        {/* Top Accent Line */}
+        <div className="h-1.5 w-full bg-gradient-to-r from-primary via-primary-hover to-primary" />
 
         <CardHeader className="space-y-4 text-center pb-6 pt-10">
-          <div className="mx-auto flex items-center justify-center mb-2">
-            <img
-              src={logoImg}
-              alt="The Ruby's Gym Logo"
-              className="h-20 w-auto object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.15)]"
-            />
+          <div className="mx-auto bg-muted w-16 h-16 rounded-2xl flex items-center justify-center mb-2 shadow-sm border border-border">
+            <Dumbbell className="h-8 w-8 text-primary" strokeWidth={1.5} />
           </div>
-          <div className="space-y-1">
-            <CardTitle className="text-2xl font-bold tracking-tight text-white font-display">
-              Acesso Restrito
-            </CardTitle>
-            <CardDescription className="text-xs text-white/50 font-semibold tracking-[0.2em] uppercase">
-              The Ruby's Gym Management
+          <div className="space-y-2">
+            <h1 className="text-3xl font-extrabold tracking-tight text-foreground drop-shadow-sm">
+              The Ruby's Gym
+            </h1>
+            <CardDescription className="text-xs text-muted-foreground font-medium tracking-[0.15em] uppercase">
+              Acesso Restrito • Sistema de Gestão
             </CardDescription>
           </div>
         </CardHeader>
 
         <CardContent className="px-8 pb-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2 text-left">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2.5 text-left">
               <Label
                 htmlFor="email"
-                className="text-xs font-semibold uppercase tracking-wider text-white/70"
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
               >
                 E-mail
               </Label>
@@ -105,41 +86,51 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 h-12 focus-visible:ring-primary focus-visible:border-primary shadow-sm transition-all"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground/50 h-12 px-4 focus-visible:ring-primary focus-visible:border-primary transition-all rounded-xl"
               />
             </div>
-            <div className="space-y-2 text-left">
+            <div className="space-y-2.5 text-left">
               <Label
                 htmlFor="password"
-                className="text-xs font-semibold uppercase tracking-wider text-white/70"
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1"
               >
                 Senha
               </Label>
               <Input
                 id="password"
                 type="password"
+                placeholder="Sua senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-white/5 border-white/10 text-white h-12 focus-visible:ring-primary focus-visible:border-primary shadow-sm transition-all"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground/50 h-12 px-4 focus-visible:ring-primary focus-visible:border-primary transition-all rounded-xl"
               />
             </div>
             <Button
               type="submit"
-              className="w-full h-12 text-sm font-semibold uppercase tracking-wider transition-all duration-300 shadow-glow bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white border border-primary/50"
-              disabled={isLoading}
+              className="w-full h-12 text-sm font-bold uppercase tracking-wider transition-all duration-300 bg-primary hover:bg-primary-hover text-primary-foreground shadow-lg shadow-primary/20 rounded-xl"
+              disabled={isLoading || loading}
             >
-              {isLoading ? 'Autenticando...' : 'Entrar na Plataforma'}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Autenticando...
+                </>
+              ) : loading ? (
+                'Inicializando...'
+              ) : (
+                'Entrar na Plataforma'
+              )}
             </Button>
           </form>
         </CardContent>
 
-        <CardFooter className="flex flex-col gap-3 pb-8 bg-white/[0.02] border-t border-white/5">
-          <div className="text-center w-full text-sm text-white/50 pt-4">
+        <CardFooter className="flex flex-col gap-3 pb-8 bg-muted/30 border-t border-border">
+          <div className="text-center w-full text-sm text-muted-foreground pt-4">
             Acesso exclusivo para colaboradores.{' '}
             <Link
               to="/auth/signup"
-              className="text-primary hover:text-primary/80 font-medium hover:underline transition-all drop-shadow-[0_0_8px_rgba(128,0,32,0.5)]"
+              className="text-primary hover:text-primary-hover font-bold hover:underline transition-all underline-offset-4"
             >
               Solicitar Conta
             </Link>

@@ -54,16 +54,18 @@ export class ErrorBoundary extends Component<Props, State> {
                 <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight font-display">Erro Inesperado</h1>
+            <h1 className="text-2xl font-bold tracking-tight font-display">
+              Recuperação do Sistema
+            </h1>
             <p className="text-white/50 text-sm leading-relaxed">
               {this.state.error?.message ||
-                'Ocorreu um erro ao carregar a aplicação. Por favor, recarregue a página.'}
+                'Ocorreu um erro inesperado no sistema. Você pode atualizar a aplicação para continuar.'}
             </p>
             <button
               onClick={() => window.location.reload()}
               className="mt-6 w-full h-12 text-sm font-semibold uppercase tracking-wider transition-all duration-300 shadow-glow bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white border border-primary/50 rounded-md"
             >
-              Recarregar Página
+              Recuperar/Atualizar
             </button>
           </div>
         </div>

@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/card'
 import { Activity, ArrowLeft } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import bgImage from '@/assets/whatsapp-image-2026-04-24-at-16.18.57-1-c8e91.jpeg'
 
 export default function Signup() {
   const [fullName, setFullName] = useState('')
@@ -56,31 +55,22 @@ export default function Signup() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black p-4 relative overflow-hidden">
-      {/* Luxurious Background image overlay */}
-      <div
-        className="absolute inset-0 z-0 opacity-60 mix-blend-overlay"
-        style={{
-          backgroundImage: `url(${bgImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-br from-[#030303]/95 via-[#0a0a0a]/80 to-primary/40 pointer-events-none z-0" />
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 pointer-events-none z-0" />
 
-      <Card className="w-full max-w-md shadow-glass border border-white/10 bg-black/60 backdrop-blur-2xl relative z-10 rounded-3xl overflow-hidden">
+      <Card className="w-full max-w-md shadow-2xl border border-white/10 bg-slate-900/50 backdrop-blur-xl relative z-10 rounded-2xl overflow-hidden">
         {/* Top elegant accent line */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
+        <div className="h-1 w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600" />
 
         <CardHeader className="space-y-4 text-center pb-6 pt-10">
-          <div className="mx-auto bg-gradient-to-br from-primary to-primary/60 w-14 h-14 rounded-2xl flex items-center justify-center mb-2 shadow-glow border border-primary/50">
+          <div className="mx-auto bg-gradient-to-br from-blue-600 to-blue-400 w-14 h-14 rounded-2xl flex items-center justify-center mb-2 shadow-lg shadow-blue-500/25 border border-blue-400/50">
             <Activity className="h-7 w-7 text-white drop-shadow-md" />
           </div>
           <div className="space-y-1">
             <CardTitle className="text-2xl font-bold tracking-tight text-white font-display">
               Criar Conta
             </CardTitle>
-            <CardDescription className="text-xs text-white/50 font-semibold tracking-[0.2em] uppercase">
+            <CardDescription className="text-xs text-blue-200/70 font-semibold tracking-[0.2em] uppercase">
               The Ruby's Gym Colaboradores
             </CardDescription>
           </div>
@@ -91,7 +81,7 @@ export default function Signup() {
             <div className="space-y-2 text-left">
               <Label
                 htmlFor="fullName"
-                className="text-xs font-semibold uppercase tracking-wider text-white/70"
+                className="text-xs font-semibold uppercase tracking-wider text-slate-300"
               >
                 Nome Completo
               </Label>
@@ -102,13 +92,13 @@ export default function Signup() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 h-12 focus-visible:ring-primary focus-visible:border-primary shadow-sm transition-all"
+                className="bg-slate-950/50 border-white/10 text-white placeholder:text-slate-500 h-12 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all"
               />
             </div>
             <div className="space-y-2 text-left">
               <Label
                 htmlFor="email"
-                className="text-xs font-semibold uppercase tracking-wider text-white/70"
+                className="text-xs font-semibold uppercase tracking-wider text-slate-300"
               >
                 E-mail
               </Label>
@@ -119,13 +109,13 @@ export default function Signup() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 h-12 focus-visible:ring-primary focus-visible:border-primary shadow-sm transition-all"
+                className="bg-slate-950/50 border-white/10 text-white placeholder:text-slate-500 h-12 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all"
               />
             </div>
             <div className="space-y-2 text-left">
               <Label
                 htmlFor="password"
-                className="text-xs font-semibold uppercase tracking-wider text-white/70"
+                className="text-xs font-semibold uppercase tracking-wider text-slate-300"
               >
                 Senha
               </Label>
@@ -136,22 +126,22 @@ export default function Signup() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 h-12 focus-visible:ring-primary focus-visible:border-primary shadow-sm transition-all"
+                className="bg-slate-950/50 border-white/10 text-white placeholder:text-slate-500 h-12 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all"
               />
             </div>
             <Button
               type="submit"
-              className="w-full h-12 text-sm font-semibold uppercase tracking-wider transition-all duration-300 shadow-glow bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white border border-primary/50"
+              className="w-full h-12 text-sm font-semibold uppercase tracking-wider transition-all duration-300 bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/25"
               disabled={isLoading}
             >
               {isLoading ? 'Cadastrando...' : 'Criar Conta'}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col gap-3 pb-8 bg-white/[0.02] border-t border-white/5 pt-4">
+        <CardFooter className="flex flex-col gap-3 pb-8 bg-slate-950/20 border-t border-white/5 pt-4">
           <Link
             to="/login"
-            className="flex items-center justify-center gap-2 text-sm text-white/50 hover:text-white transition-colors"
+            className="flex items-center justify-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Já tenho conta — Entrar

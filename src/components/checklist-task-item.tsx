@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import {
   CheckCircle2,
   Clock,
@@ -35,32 +35,22 @@ export function ChecklistTaskItem({
 }: ChecklistTaskItemProps) {
   const [skipOpen, setSkipOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [descExpanded, setDescExpanded] = useState(false)
-  const [isOverflowing, setIsOverflowing] = useState(false)
-  const descRef = useRef<HTMLParagraphElement>(null)
+  const [isExpanded, setIsExpanded] = useState(false)
+
   const isCompleted = !!completion
   const overdue = isTaskOverdue(task.expected_time, isCompleted)
   const upcoming = isTaskUpcoming(task.expected_time, isCompleted)
   const completedLate =
     isCompleted && wasCompletedLate(completion!.completed_at, task.expected_time)
 
-  useEffect(() => {
-    if (descRef.current && task.description) {
-      const el = descRef.current
-      if (descExpanded) {
-        setIsOverflowing(false)
-      } else {
-        setIsOverflowing(el.scrollHeight > el.clientHeight + 1)
-      }
-    }
-  }, [task.description, descExpanded])
+  const isLongDescription = task.description && task.description.length > 100
 
   return (
     <li
       className={cn(
-        'p-5 border-b border-white/5 last:border-0 transition-all duration-500 group relative',
-        !isCompleted ? 'hover:bg-white/[0.04]' : 'bg-black/20 opacity-80',
-        !isCompleted && task.priority === 'High' && 'bg-primary/[0.02]',
+        'p-5 border-b border-border last:border-0 transition-all duration-500 group relative',
+        !isCompleted ? 'hover:bg-muted/50' : 'bg-muted/30 opacity-80',
+        !isCompleted && task.priority === 'High' && 'bg-red-500/[0.03]',
       )}
     >
       <div className="flex gap-3">
@@ -70,8 +60,8 @@ export function ChecklistTaskItem({
           className={cn(
             'shrink-0 mt-0.5 transition-all duration-500 rounded-full flex items-center justify-center h-6 w-6 border',
             isCompleted
-              ? 'border-primary bg-primary text-white shadow-[0_0_12px_rgba(128,0,32,0.6)] scale-110'
-              : 'border-white/20 text-transparent hover:border-primary hover:shadow-[0_0_8px_rgba(128,0,32,0.4)]',
+              ? 'border-primary bg-primary text-primary-foreground shadow-md scale-110'
+              : 'border-border text-transparent hover:border-primary hover:shadow-sm',
           )}
         >
           <CheckCircle2
@@ -87,8 +77,8 @@ export function ChecklistTaskItem({
             className={cn(
               'text-[14px] font-medium leading-snug break-words transition-colors duration-500',
               isCompleted
-                ? 'text-white/30 line-through decoration-white/20'
-                : 'text-white/90 group-hover:text-white',
+                ? 'text-muted-foreground line-through decoration-muted-foreground/30'
+                : 'text-foreground group-hover:text-foreground',
             )}
           >
             {task.title}
@@ -97,53 +87,47 @@ export function ChecklistTaskItem({
           <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
             <PriorityBadge priority={task.priority || 'Medium'} />
             {overdue && (
-              <span className="text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20 flex items-center gap-1 uppercase">
+              <span className="text-[10px] font-bold text-red-700 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20 flex items-center gap-1 uppercase">
                 <AlertTriangle className="h-3 w-3" /> Atrasada
               </span>
             )}
             {upcoming && (
-              <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20 flex items-center gap-1 uppercase">
+              <span className="text-[10px] font-bold text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 flex items-center gap-1 uppercase">
                 <Timer className="h-3 w-3" /> Próxima
               </span>
             )}
             {completedLate && (
-              <span className="text-[10px] font-bold text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded border border-orange-400/20 flex items-center gap-1 uppercase">
+              <span className="text-[10px] font-bold text-orange-700 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20 flex items-center gap-1 uppercase">
                 <Clock className="h-3 w-3" /> Atraso
               </span>
             )}
           </div>
 
           {task.description && (
-            <div className="mt-2">
-              <div
+            <div className="mt-2 flex flex-col items-start gap-1">
+              <p
                 className={cn(
-                  'transition-all duration-300 overflow-hidden',
-                  descExpanded ? 'max-h-[500px]' : 'max-h-[3rem]',
+                  'text-xs leading-relaxed transition-all duration-300',
+                  !isExpanded && 'line-clamp-2',
+                  isCompleted
+                    ? 'text-muted-foreground/50'
+                    : 'text-muted-foreground group-hover:text-muted-foreground',
                 )}
               >
-                <p
-                  ref={descRef}
-                  className={cn(
-                    'text-xs leading-relaxed',
-                    isCompleted ? 'text-white/20' : 'text-white/50 group-hover:text-white/70',
-                    !descExpanded && 'line-clamp-2',
-                  )}
-                >
-                  {task.description}
-                </p>
-              </div>
-              {(isOverflowing || descExpanded) && (
+                {task.description}
+              </p>
+              {isLongDescription && (
                 <button
-                  onClick={() => setDescExpanded((v) => !v)}
-                  className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-white/40 hover:text-primary transition-colors duration-300"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="text-[10px] font-bold text-primary flex items-center gap-0.5 hover:text-primary-hover transition-colors"
                 >
-                  {descExpanded ? (
+                  {isExpanded ? (
                     <>
                       Ver menos <ChevronUp className="h-3 w-3" />
                     </>
                   ) : (
                     <>
-                      Saiba mais <ChevronDown className="h-3 w-3" />
+                      Ver mais <ChevronDown className="h-3 w-3" />
                     </>
                   )}
                 </button>
@@ -157,10 +141,10 @@ export function ChecklistTaskItem({
                 className={cn(
                   'flex items-center gap-1 px-2 py-1 rounded border font-medium transition-colors duration-500',
                   isCompleted
-                    ? 'bg-transparent border-transparent text-primary/50'
+                    ? 'bg-transparent border-transparent text-muted-foreground/50'
                     : overdue
-                      ? 'bg-red-500/10 border-red-500/20 text-red-400'
-                      : 'bg-white/5 border-white/10 text-white/60 group-hover:border-white/20',
+                      ? 'bg-red-500/10 border-red-500/20 text-red-700'
+                      : 'bg-muted/50 border-border text-muted-foreground group-hover:border-primary/30',
                 )}
               >
                 <Clock className="h-3 w-3" />
@@ -169,7 +153,7 @@ export function ChecklistTaskItem({
             )}
 
             {isCompleted && (
-              <span className="flex items-center gap-1 px-2 py-1 rounded bg-primary/10 text-primary border border-primary/20 font-medium shadow-glow-sm">
+              <span className="flex items-center gap-1 px-2 py-1 rounded bg-primary/10 text-primary border border-primary/20 font-medium">
                 ✓{' '}
                 {new Date(completion!.completed_at).toLocaleTimeString('pt-BR', {
                   hour: '2-digit',
@@ -179,7 +163,7 @@ export function ChecklistTaskItem({
             )}
 
             {task.is_recurring && !isCompleted && (
-              <span className="flex items-center gap-1 px-2 py-1 rounded border border-white/10 bg-white/5 text-white/50 font-medium">
+              <span className="flex items-center gap-1 px-2 py-1 rounded border border-border bg-muted/50 text-muted-foreground font-medium">
                 <Repeat className="h-3 w-3" />
                 {task.recurrence_type === 'daily' ? 'Diária' : 'Semanal'}
               </span>
@@ -189,7 +173,7 @@ export function ChecklistTaskItem({
               {task.is_recurring && !isCompleted && (
                 <button
                   onClick={() => setSkipOpen(true)}
-                  className="flex items-center gap-1 px-2 py-1 rounded border border-amber-500/20 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors font-medium"
+                  className="flex items-center gap-1 px-2 py-1 rounded border border-amber-500/20 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 transition-colors font-medium"
                 >
                   <SkipForward className="h-3 w-3" /> Pular
                 </button>
@@ -199,7 +183,7 @@ export function ChecklistTaskItem({
                   href={task.instruction_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-2 py-1 rounded border border-blue-500/20 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors font-medium"
+                  className="flex items-center gap-1 px-2 py-1 rounded border border-blue-500/20 bg-blue-500/10 text-blue-700 hover:bg-blue-500/20 transition-colors font-medium"
                 >
                   <FileText className="h-3 w-3" /> Manual
                 </a>
@@ -207,7 +191,7 @@ export function ChecklistTaskItem({
               {canDelete && onDelete && (
                 <button
                   onClick={() => setDeleteOpen(true)}
-                  className="flex items-center gap-1 px-2 py-1 text-white/40 hover:text-white transition-colors"
+                  className="flex items-center gap-1 px-2 py-1 text-muted-foreground hover:text-destructive transition-colors"
                 >
                   <Trash2 className="h-3.5 w-3.5" /> Excluir
                 </button>

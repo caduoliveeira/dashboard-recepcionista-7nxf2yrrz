@@ -49,6 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         console.error('Error fetching profile:', error)
+        profileFetchedRef.current = null
         setLoading(false)
         return
       }
@@ -69,45 +70,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false)
     } catch (err) {
       console.error('Unexpected error fetching profile:', err)
+      profileFetchedRef.current = null
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
     let mounted = true
+    let subscription: any
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return
-
-      setSession(session)
-      setUser(session?.user ?? null)
-
-      if (session?.user) {
-        fetchProfile(session.user.id)
-      } else {
-        profileFetchedRef.current = null
-        setProfile(null)
-        setRole(null)
-        if (sessionCheckedRef.current) {
-          setLoading(false)
-        }
-      }
-    })
-
-    supabase.auth
-      .getSession()
-      .then(({ data: { session }, error }) => {
+    try {
+      const { data } = supabase.auth.onAuthStateChange((event, session) => {
         if (!mounted) return
-
-        sessionCheckedRef.current = true
-
-        if (error) {
-          console.error('Error getting session:', error)
-          setLoading(false)
-          return
-        }
 
         setSession(session)
         setUser(session?.user ?? null)
@@ -118,19 +92,61 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           profileFetchedRef.current = null
           setProfile(null)
           setRole(null)
-          setLoading(false)
+          if (sessionCheckedRef.current) {
+            setLoading(false)
+          }
         }
       })
-      .catch((err) => {
-        console.error('Unexpected error getting session:', err)
-        if (mounted) setLoading(false)
-      })
+      subscription = data?.subscription
+
+      supabase.auth
+        .getSession()
+        .then(({ data: { session }, error }) => {
+          if (!mounted) return
+
+          sessionCheckedRef.current = true
+
+          if (error) {
+            console.error('Error getting session:', error)
+            setLoading(false)
+            return
+          }
+
+          setSession(session)
+          setUser(session?.user ?? null)
+
+          if (session?.user) {
+            fetchProfile(session.user.id)
+          } else {
+            profileFetchedRef.current = null
+            setProfile(null)
+            setRole(null)
+            setLoading(false)
+          }
+        })
+        .catch((err) => {
+          console.error('Unexpected error getting session:', err)
+          if (mounted) setLoading(false)
+        })
+    } catch (err) {
+      console.error('Supabase client initialization failed:', err)
+      if (mounted) setLoading(false)
+    }
 
     return () => {
       mounted = false
-      subscription.unsubscribe()
+      if (subscription) subscription.unsubscribe()
     }
   }, [fetchProfile])
+
+  useEffect(() => {
+    if (!loading) return
+    const timeoutId = setTimeout(() => {
+      console.warn('Auth initialization timed out — forcing loading state to false')
+      setLoading(false)
+    }, 15000)
+    return () => clearTimeout(timeoutId)
+  }, [loading])
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     setLoading(true)

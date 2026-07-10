@@ -25,3 +25,25 @@ export const toggleUserActive = async (userId: string, isActive: boolean) => {
     .single()
   return { data: data as UserProfile | null, error }
 }
+
+export const createUser = async (input: {
+  fullName: string
+  email: string
+  password: string
+  role: 'receptionist' | 'owner'
+}) => {
+  const { data, error } = await supabase.functions.invoke('create-user', {
+    body: input,
+  })
+  return { data, error }
+}
+
+export const updateUserName = async (userId: string, fullName: string) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ full_name: fullName })
+    .eq('id', userId)
+    .select('*')
+    .single()
+  return { data: data as UserProfile | null, error }
+}
