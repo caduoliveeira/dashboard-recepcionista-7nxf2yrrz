@@ -1,8 +1,6 @@
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { useState, useRef, useEffect } from 'react'
 import {
   CheckCircle2,
-  Circle,
   Clock,
   Repeat,
   AlertTriangle,
@@ -10,6 +8,8 @@ import {
   SkipForward,
   FileText,
   Trash2,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Task, TaskCompletion } from '@/services/tasks'
@@ -35,11 +35,25 @@ export function ChecklistTaskItem({
 }: ChecklistTaskItemProps) {
   const [skipOpen, setSkipOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [descExpanded, setDescExpanded] = useState(false)
+  const [isOverflowing, setIsOverflowing] = useState(false)
+  const descRef = useRef<HTMLParagraphElement>(null)
   const isCompleted = !!completion
   const overdue = isTaskOverdue(task.expected_time, isCompleted)
   const upcoming = isTaskUpcoming(task.expected_time, isCompleted)
   const completedLate =
     isCompleted && wasCompletedLate(completion!.completed_at, task.expected_time)
+
+  useEffect(() => {
+    if (descRef.current && task.description) {
+      const el = descRef.current
+      if (descExpanded) {
+        setIsOverflowing(false)
+      } else {
+        setIsOverflowing(el.scrollHeight > el.clientHeight + 1)
+      }
+    }
+  }, [task.description, descExpanded])
 
   return (
     <li
@@ -103,14 +117,34 @@ export function ChecklistTaskItem({
           </div>
 
           {task.description && (
-            <p
-              className={cn(
-                'text-xs mt-2 leading-relaxed transition-colors duration-500',
-                isCompleted ? 'text-white/20' : 'text-white/50 group-hover:text-white/70',
+            <div className="mt-2">
+              <p
+                ref={descRef}
+                className={cn(
+                  'text-xs leading-relaxed transition-all duration-300',
+                  isCompleted ? 'text-white/20' : 'text-white/50 group-hover:text-white/70',
+                  !descExpanded && 'line-clamp-2',
+                )}
+              >
+                {task.description}
+              </p>
+              {(isOverflowing || descExpanded) && (
+                <button
+                  onClick={() => setDescExpanded((v) => !v)}
+                  className="mt-1 inline-flex items-center gap-0.5 text-[11px] font-semibold text-primary/70 hover:text-primary transition-colors duration-300"
+                >
+                  {descExpanded ? (
+                    <>
+                      Ver menos <ChevronUp className="h-3 w-3" />
+                    </>
+                  ) : (
+                    <>
+                      Saiba mais <ChevronDown className="h-3 w-3" />
+                    </>
+                  )}
+                </button>
               )}
-            >
-              {task.description}
-            </p>
+            </div>
           )}
 
           <div className="flex flex-wrap items-center gap-2 mt-4 text-xs">

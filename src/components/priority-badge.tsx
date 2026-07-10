@@ -22,21 +22,17 @@ export function PriorityBadge({ priority }: { priority: string }) {
     },
   }
 
-  if (priority === 'Medium' || priority === 'Low') {
-    return null // The screenshot only highlights High priority. Others remain hidden to keep UI clean.
-  }
-
   const c = config[priority] || config.Medium
   const Icon = c.icon
   return (
     <Badge
       variant="outline"
       className={cn(
-        'text-[9px] font-extrabold tracking-widest gap-1 px-2 py-0.5 rounded-full border uppercase transition-colors',
+        'text-[9px] font-extrabold tracking-widest gap-1 px-2 py-0.5 rounded-full border uppercase transition-colors inline-flex items-center shrink-0',
         c.className,
       )}
     >
-      <Icon className="h-3 w-3" strokeWidth={2.5} /> {c.label}
+      <Icon className="h-3 w-3 shrink-0" strokeWidth={2.5} /> {c.label}
     </Badge>
   )
 }

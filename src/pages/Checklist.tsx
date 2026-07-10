@@ -259,7 +259,8 @@ export default function Checklist() {
         </div>
       ) : (
         <div className="flex flex-col gap-8">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 items-stretch">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 items-start">
+            {' '}
             {columns.map((col) => {
               const completedCount = col.catTasks.filter((t) => completedIds.has(t.id)).length
               const total = col.catTasks.length
@@ -269,7 +270,7 @@ export default function Checklist() {
                 <Card
                   key={col.category?.id || 'general'}
                   className={cn(
-                    'shadow-[0_8px_32px_rgba(0,0,0,0.4)] border-white/5 bg-[#0a0a0a]/80 backdrop-blur-2xl rounded-2xl overflow-hidden flex flex-col transition-all duration-500 h-full',
+                    'shadow-[0_8px_32px_rgba(0,0,0,0.4)] border-white/5 bg-[#0a0a0a]/80 backdrop-blur-2xl rounded-2xl overflow-hidden flex flex-col transition-all duration-500 h-[calc(100vh-360px)] min-h-[400px] max-h-[700px]',
                     isAllCompleted &&
                       total > 0 &&
                       'border-primary/40 shadow-[0_8px_40px_rgba(128,0,32,0.15)] bg-gradient-to-b from-primary/[0.03] to-[#0a0a0a]/80',
@@ -318,8 +319,8 @@ export default function Checklist() {
                       />
                     )}
                   </CardHeader>
-                  <CardContent className="p-0 flex-1 flex flex-col">
-                    <ul className="flex-1 flex flex-col">
+                  <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
+                    <ul className="flex-1 flex flex-col overflow-y-auto scrollbar-thin">
                       {col.catTasks.map((task) => (
                         <ChecklistTaskItem
                           key={task.id}
