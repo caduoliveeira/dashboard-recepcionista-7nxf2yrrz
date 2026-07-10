@@ -53,12 +53,12 @@ export default function Layout() {
     <div className="min-h-screen bg-background font-sans flex text-foreground selection:bg-primary/30 selection:text-primary-foreground">
       {/* Desktop Sidebar - Premium Dark Mode */}
       <aside className="hidden lg:flex flex-col w-72 border-r border-white/5 bg-card/50 backdrop-blur-xl text-white fixed inset-y-0 left-0 z-30 shadow-glass">
-        <div className="flex items-center justify-center h-28 border-b border-white/5 px-6 shrink-0 relative overflow-hidden bg-black/20">
+        <div className="flex items-center justify-center h-24 border-b border-white/5 px-4 shrink-0 relative overflow-hidden bg-black/20">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/20 to-transparent opacity-30 pointer-events-none" />
           <img
             src={logoImg}
             alt="TRG Logo"
-            className="h-12 w-auto object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+            className="h-16 w-auto object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
           />
         </div>
 
@@ -136,7 +136,7 @@ export default function Layout() {
               <img
                 src={logoImg}
                 alt="TRG Logo"
-                className="h-8 w-auto drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]"
+                className="h-10 w-auto drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]"
               />
               <div className="flex items-center gap-2">
                 {role === 'owner' && <NotificationBell />}
