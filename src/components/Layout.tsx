@@ -1,4 +1,4 @@
-import { Outlet, Navigate, Link, useLocation } from 'react-router-dom'
+import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import {
   LogOut,
@@ -15,25 +15,14 @@ import {
   ClipboardCheck,
 } from 'lucide-react'
 import { NotificationBell } from '@/components/notification-bell'
+import { ErrorBoundary } from '@/components/error-boundary'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import logoImg from '@/assets/06-b2e9d.png'
 
 export default function Layout() {
-  const { user, role, loading, signOut } = useAuth()
+  const { role, signOut } = useAuth()
   const location = useLocation()
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin shadow-glow"></div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />
-  }
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home, show: role === 'owner' },
@@ -176,7 +165,9 @@ export default function Layout() {
 
         <main className="flex-1 w-full px-4 sm:px-6 lg:px-12 py-8 lg:py-10 relative z-0">
           <div className="max-w-7xl mx-auto">
-            <Outlet />
+            <ErrorBoundary compact>
+              <Outlet />
+            </ErrorBoundary>
           </div>
         </main>
       </div>

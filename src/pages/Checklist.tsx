@@ -112,10 +112,10 @@ export default function Checklist() {
       if (tasksRes.error || catsRes.error || completionsRes.error || activityRes.error) {
         setError(true)
       } else {
-        if (tasksRes.data) setTasks(tasksRes.data)
-        if (catsRes.data) setCategories(catsRes.data)
-        if (completionsRes.data) setCompletions(completionsRes.data)
-        if (activityRes.data) setActivity(activityRes.data)
+        setTasks(tasksRes.data ?? [])
+        setCategories(catsRes.data ?? [])
+        setCompletions(completionsRes.data ?? [])
+        setActivity(activityRes.data ?? [])
       }
     } catch (err) {
       console.error(err)
@@ -163,11 +163,15 @@ export default function Checklist() {
     toast({ title: 'Sucesso', description: 'Tarefa excluída com sucesso!' })
   }
 
-  const completedIds = useMemo(() => new Set(completions.map((c) => c.task_id)), [completions])
+  const completedIds = useMemo(
+    () => new Set((completions || []).map((c) => c.task_id)),
+    [completions],
+  )
 
   const filterCounts = useMemo(() => {
-    const counts: Record<FilterType, number> = { all: 0, now: 0, upcoming: 0, completed: 0 }
-    tasks.forEach((t) => {
+    const counts: Record<FilterType, number> = { all: 0, now: 0, upcoming: 0, completed: 0 }(
+      tasks || [],
+    ).forEach((t) => {
       if (!shouldShowTaskToday(t.recurrence_days)) return
       const isCompleted = completedIds.has(t.id)
       counts.all++
@@ -180,7 +184,7 @@ export default function Checklist() {
 
   const filteredTasks = useMemo(
     () =>
-      tasks.filter(
+      (tasks || []).filter(
         (t) =>
           shouldShowTask(t.expected_time, completedIds.has(t.id), filter) &&
           shouldShowTaskToday(t.recurrence_days),
@@ -189,44 +193,50 @@ export default function Checklist() {
   )
 
   const columns = useMemo(() => {
-    const predefinedCols = CATEGORY_ORDER.map((name) => {
-      const cat = categories.find((c) => c.name.toUpperCase().includes(name))
-      const catTasks = filteredTasks.filter((t) => {
-        if (cat) return t.category_id === cat.id
-        return t.category?.toUpperCase().includes(name)
+    try {
+      const predefinedCols = CATEGORY_ORDER.map((name) => {
+        const cat = categories.find((c) => c.name.toUpperCase().includes(name))
+        const catTasks = filteredTasks.filter((t) => {
+          if (cat) return t.category_id === cat.id
+          return t.category?.toUpperCase().includes(name)
+        })
+        return {
+          name,
+          category:
+            cat ||
+            ({ id: `dummy-${name}`, name, start_time: null, end_time: null } as TaskCategory),
+          catTasks,
+        }
       })
-      return {
-        name,
-        category:
-          cat || ({ id: `dummy-${name}`, name, start_time: null, end_time: null } as TaskCategory),
-        catTasks,
+
+      const otherCats = categories.filter(
+        (c) => !CATEGORY_ORDER.some((name) => c.name.toUpperCase().includes(name)),
+      )
+      const others = otherCats.map((cat) => ({
+        name: cat.name,
+        category: cat,
+        catTasks: filteredTasks.filter((t) => t.category_id === cat.id),
+      }))
+
+      const uncategorized = filteredTasks.filter((t) => {
+        if (t.category_id) return false
+        return !CATEGORY_ORDER.some((name) => t.category?.toUpperCase().includes(name))
+      })
+
+      const allCols = [...predefinedCols, ...others]
+      if (uncategorized.length > 0) {
+        allCols.push({
+          name: 'GERAL',
+          category: null as unknown as TaskCategory,
+          catTasks: uncategorized,
+        })
       }
-    })
 
-    const otherCats = categories.filter(
-      (c) => !CATEGORY_ORDER.some((name) => c.name.toUpperCase().includes(name)),
-    )
-    const others = otherCats.map((cat) => ({
-      name: cat.name,
-      category: cat,
-      catTasks: filteredTasks.filter((t) => t.category_id === cat.id),
-    }))
-
-    const uncategorized = filteredTasks.filter((t) => {
-      if (t.category_id) return false
-      return !CATEGORY_ORDER.some((name) => t.category?.toUpperCase().includes(name))
-    })
-
-    const allCols = [...predefinedCols, ...others]
-    if (uncategorized.length > 0) {
-      allCols.push({
-        name: 'GERAL',
-        category: null as unknown as TaskCategory,
-        catTasks: uncategorized,
-      })
+      return allCols
+    } catch (err) {
+      console.error('Error computing columns:', err)
+      return []
     }
-
-    return allCols
   }, [categories, filteredTasks])
 
   if (loading) {
@@ -323,9 +333,11 @@ export default function Checklist() {
       ) : (
         <div className="flex flex-col gap-10">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
-            {columns.map((col) => {
-              const completedCount = col.catTasks.filter((t) => completedIds.has(t.id)).length
-              const total = col.catTasks.length
+            {(columns || []).map((col) => {
+              const completedCount = (col.catTasks || []).filter((t) =>
+                completedIds.has(t.id),
+              ).length
+              const total = (col.catTasks || []).length
               const isAllCompleted = total > 0 && completedCount === total
               const progress = total > 0 ? (completedCount / total) * 100 : 0
               return (
@@ -389,11 +401,11 @@ export default function Checklist() {
                         </div>
                       ) : (
                         <ul className="flex flex-col pb-16">
-                          {col.catTasks.map((task) => (
+                          {(col.catTasks || []).map((task) => (
                             <ChecklistTaskItem
                               key={task.id}
                               task={task}
-                              completion={completions.find((c) => c.task_id === task.id)}
+                              completion={(completions || []).find((c) => c.task_id === task.id)}
                               onComplete={handleComplete}
                               onDelete={handleDelete}
                               canDelete={role === 'owner'}

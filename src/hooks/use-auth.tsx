@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  ReactNode,
+} from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
 
@@ -29,70 +37,88 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<any>(null)
   const [role, setRole] = useState<UserRole>(null)
   const [loading, setLoading] = useState(true)
+  const profileFetchedRef = useRef<string | null>(null)
+  const sessionCheckedRef = useRef(false)
+
+  const fetchProfile = useCallback(async (userId: string) => {
+    if (profileFetchedRef.current === userId) return
+    profileFetchedRef.current = userId
+
+    try {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
+
+      if (error) {
+        console.error('Error fetching profile:', error)
+        setLoading(false)
+        return
+      }
+
+      if (data && data.is_active === false) {
+        profileFetchedRef.current = null
+        await supabase.auth.signOut()
+        setProfile(null)
+        setRole(null)
+        setUser(null)
+        setSession(null)
+        setLoading(false)
+        return
+      }
+
+      setProfile(data)
+      setRole(data?.role as UserRole)
+      setLoading(false)
+    } catch (err) {
+      console.error('Unexpected error fetching profile:', err)
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
     let mounted = true
 
-    const fetchProfile = async (userId: string) => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single()
-        if (mounted) {
-          if (error) {
-            console.error('Error fetching profile:', error)
-            setLoading(false)
-            return
-          }
-          if (data && data.is_active === false) {
-            await supabase.auth.signOut()
-            setProfile(null)
-            setRole(null)
-            setUser(null)
-            setSession(null)
-            setLoading(false)
-            return
-          }
-          setProfile(data)
-          setRole(data?.role as UserRole)
-          setLoading(false)
-        }
-      } catch (err) {
-        console.error('Unexpected error fetching profile:', err)
-        if (mounted) setLoading(false)
-      }
-    }
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return
+
       setSession(session)
       setUser(session?.user ?? null)
+
       if (session?.user) {
         fetchProfile(session.user.id)
       } else {
+        profileFetchedRef.current = null
         setProfile(null)
         setRole(null)
-        setLoading(false)
+        if (sessionCheckedRef.current) {
+          setLoading(false)
+        }
       }
     })
 
     supabase.auth
       .getSession()
       .then(({ data: { session }, error }) => {
+        if (!mounted) return
+
+        sessionCheckedRef.current = true
+
         if (error) {
           console.error('Error getting session:', error)
-          if (mounted) setLoading(false)
+          setLoading(false)
           return
         }
+
         setSession(session)
         setUser(session?.user ?? null)
+
         if (session?.user) {
           fetchProfile(session.user.id)
         } else {
-          if (mounted) setLoading(false)
+          profileFetchedRef.current = null
+          setProfile(null)
+          setRole(null)
+          setLoading(false)
         }
       })
       .catch((err) => {
@@ -104,9 +130,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       mounted = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [fetchProfile])
 
   const signUp = async (email: string, password: string, fullName?: string) => {
+    setLoading(true)
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -115,16 +142,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         data: fullName ? { full_name: fullName } : undefined,
       },
     })
+    if (error) setLoading(false)
     return { error }
   }
 
   const signIn = async (email: string, password: string) => {
+    setLoading(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) setLoading(false)
     return { error }
   }
 
   const signOut = async () => {
+    profileFetchedRef.current = null
+    setLoading(true)
     const { error } = await supabase.auth.signOut()
+    if (error) setLoading(false)
     return { error }
   }
 

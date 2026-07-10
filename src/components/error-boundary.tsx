@@ -2,6 +2,7 @@ import { Component, ErrorInfo, ReactNode } from 'react'
 
 interface Props {
   children?: ReactNode
+  compact?: boolean
 }
 
 interface State {
@@ -24,8 +25,15 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
+      const { compact } = this.props
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white p-4 relative overflow-hidden">
+        <div
+          className={
+            compact
+              ? 'min-h-[60vh] flex flex-col items-center justify-center bg-black text-white p-4 relative overflow-hidden rounded-2xl'
+              : 'min-h-screen flex flex-col items-center justify-center bg-black text-white p-4 relative overflow-hidden'
+          }
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-[#030303]/95 via-[#0a0a0a]/80 to-primary/40 pointer-events-none z-0" />
 
           <div className="w-full max-w-md p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-2xl text-center space-y-4 relative z-10 shadow-glass">
@@ -49,13 +57,13 @@ export class ErrorBoundary extends Component<Props, State> {
             <h1 className="text-2xl font-bold tracking-tight font-display">Erro Inesperado</h1>
             <p className="text-white/50 text-sm leading-relaxed">
               {this.state.error?.message ||
-                'Ocorreu um erro ao carregar a aplicação. Por favor, tente novamente.'}
+                'Ocorreu um erro ao carregar a aplicação. Por favor, recarregue a página.'}
             </p>
             <button
               onClick={() => window.location.reload()}
               className="mt-6 w-full h-12 text-sm font-semibold uppercase tracking-wider transition-all duration-300 shadow-glow bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white border border-primary/50 rounded-md"
             >
-              Tentar Novamente
+              Recarregar Página
             </button>
           </div>
         </div>
