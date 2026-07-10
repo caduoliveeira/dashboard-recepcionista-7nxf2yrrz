@@ -31,6 +31,14 @@ import { ShiftHandoverNotes } from '@/components/shift-handover-notes'
 import { shouldShowTask, shouldShowTaskToday, type FilterType } from '@/lib/task-utils'
 import { supabase } from '@/lib/supabase/client'
 
+const CATEGORY_ORDER = ['DIÁRIA', 'MANHÃ', 'TARDE', 'NOITE']
+
+const getCategoryOrderIndex = (name: string) => {
+  const upper = name.toUpperCase()
+  const idx = CATEGORY_ORDER.findIndex((c) => upper.includes(c))
+  return idx === -1 ? CATEGORY_ORDER.length : idx
+}
+
 const formatTimeRange = (start: string | null, end: string | null) => {
   if (!start && !end) return ''
   const fmt = (t: string | null) => (t ? t.substring(0, 5) : '')
@@ -167,10 +175,9 @@ export default function Checklist() {
 
   const columns = useMemo(() => {
     const sortedCategories = [...categories].sort((a, b) => {
-      const aIsDaily = a.name.toLowerCase().includes('diár')
-      const bIsDaily = b.name.toLowerCase().includes('diár')
-      if (aIsDaily && !bIsDaily) return -1
-      if (!aIsDaily && bIsDaily) return 1
+      const aIdx = getCategoryOrderIndex(a.name)
+      const bIdx = getCategoryOrderIndex(b.name)
+      if (aIdx !== bIdx) return aIdx - bIdx
       const aStart = a.start_time || '24:00'
       const bStart = b.start_time || '24:00'
       return aStart.localeCompare(bStart)
@@ -259,8 +266,7 @@ export default function Checklist() {
         </div>
       ) : (
         <div className="flex flex-col gap-8">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 items-start">
-            {' '}
+          <div className="flex gap-6 overflow-x-auto pb-4 snap-x scrollbar-thin lg:grid lg:grid-cols-4 lg:overflow-visible lg:pb-0 items-start">
             {columns.map((col) => {
               const completedCount = col.catTasks.filter((t) => completedIds.has(t.id)).length
               const total = col.catTasks.length
@@ -270,7 +276,7 @@ export default function Checklist() {
                 <Card
                   key={col.category?.id || 'general'}
                   className={cn(
-                    'shadow-[0_8px_32px_rgba(0,0,0,0.4)] border-white/5 bg-[#0a0a0a]/80 backdrop-blur-2xl rounded-2xl overflow-hidden flex flex-col transition-all duration-500 h-[calc(100vh-360px)] min-h-[400px] max-h-[700px]',
+                    'shadow-[0_8px_32px_rgba(0,0,0,0.4)] border-white/5 bg-[#0a0a0a]/80 backdrop-blur-2xl rounded-2xl overflow-hidden flex flex-col transition-all duration-500 h-[75vh] min-h-[400px] max-h-[800px] min-w-[280px] lg:min-w-0 snap-start shrink-0 lg:shrink',
                     isAllCompleted &&
                       total > 0 &&
                       'border-primary/40 shadow-[0_8px_40px_rgba(128,0,32,0.15)] bg-gradient-to-b from-primary/[0.03] to-[#0a0a0a]/80',

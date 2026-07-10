@@ -58,14 +58,12 @@ export function ChecklistTaskItem({
   return (
     <li
       className={cn(
-        'p-6 border-b border-white/5 last:border-0 transition-all duration-500 group relative',
-        !isCompleted
-          ? 'hover:bg-white/[0.04] hover:-translate-y-0.5 hover:shadow-[0_4px_20px_rgba(128,0,32,0.1)] hover:border-primary/20 hover:z-10'
-          : 'bg-black/20 opacity-80',
+        'p-5 border-b border-white/5 last:border-0 transition-all duration-500 group relative',
+        !isCompleted ? 'hover:bg-white/[0.04]' : 'bg-black/20 opacity-80',
         !isCompleted && task.priority === 'High' && 'bg-primary/[0.02]',
       )}
     >
-      <div className="flex gap-4">
+      <div className="flex gap-3">
         <button
           onClick={() => onComplete(task.id)}
           disabled={isCompleted}
@@ -85,35 +83,34 @@ export function ChecklistTaskItem({
         </button>
 
         <div className="flex-1 min-w-0 flex flex-col">
-          <div className="flex flex-col gap-1.5">
-            <span
-              className={cn(
-                'text-[15px] font-medium leading-snug break-words transition-colors duration-500',
-                isCompleted
-                  ? 'text-white/30 line-through decoration-white/20'
-                  : 'text-white/90 group-hover:text-white',
-              )}
-            >
-              {task.title}
-            </span>
-            <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
-              <PriorityBadge priority={task.priority || 'Medium'} />
-              {overdue && (
-                <span className="text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20 flex items-center gap-1 uppercase">
-                  <AlertTriangle className="h-3 w-3" /> Atrasada
-                </span>
-              )}
-              {upcoming && (
-                <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20 flex items-center gap-1 uppercase">
-                  <Timer className="h-3 w-3" /> Próxima
-                </span>
-              )}
-              {completedLate && (
-                <span className="text-[10px] font-bold text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded border border-orange-400/20 flex items-center gap-1 uppercase">
-                  <Clock className="h-3 w-3" /> Atraso
-                </span>
-              )}
-            </div>
+          <span
+            className={cn(
+              'text-[14px] font-medium leading-snug break-words transition-colors duration-500',
+              isCompleted
+                ? 'text-white/30 line-through decoration-white/20'
+                : 'text-white/90 group-hover:text-white',
+            )}
+          >
+            {task.title}
+          </span>
+
+          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+            <PriorityBadge priority={task.priority || 'Medium'} />
+            {overdue && (
+              <span className="text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20 flex items-center gap-1 uppercase">
+                <AlertTriangle className="h-3 w-3" /> Atrasada
+              </span>
+            )}
+            {upcoming && (
+              <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20 flex items-center gap-1 uppercase">
+                <Timer className="h-3 w-3" /> Próxima
+              </span>
+            )}
+            {completedLate && (
+              <span className="text-[10px] font-bold text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded border border-orange-400/20 flex items-center gap-1 uppercase">
+                <Clock className="h-3 w-3" /> Atraso
+              </span>
+            )}
           </div>
 
           {task.description && (
@@ -147,7 +144,7 @@ export function ChecklistTaskItem({
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-2 mt-4 text-xs">
+          <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
             {task.expected_time && (
               <span
                 className={cn(
@@ -181,7 +178,7 @@ export function ChecklistTaskItem({
               </span>
             )}
 
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-1.5">
               {task.is_recurring && !isCompleted && (
                 <button
                   onClick={() => setSkipOpen(true)}
