@@ -33,6 +33,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer } from 'recharts'
 import { CheckCircle2, AlertTriangle, TrendingUp, Target, Download } from 'lucide-react'
 import { exportToCSV } from '@/lib/csv-utils'
+import { MaintenanceAlertPanel } from '@/components/maintenance-alert-panel'
+import { DailyActivityLog } from '@/components/daily-activity-log'
 
 const MONTHS = [
   'Janeiro',
@@ -157,6 +159,11 @@ export default function Audit() {
             <Download className="h-4 w-4" /> Exportar
           </Button>
         </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <DailyActivityLog />
+        <MaintenanceAlertPanel />
       </div>
 
       {isLoading ? (
