@@ -3,6 +3,7 @@ import {
   fetchShoppingItems,
   addShoppingItem,
   markPurchased,
+  deleteShoppingItem,
   type ShoppingItem,
 } from '@/services/shopping'
 import { useAuth } from '@/hooks/use-auth'
@@ -11,7 +12,17 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ShoppingCart, Plus } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { ShoppingCart, Plus, Trash2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 export default function Shopping() {
@@ -19,6 +30,7 @@ export default function Shopping() {
   const [items, setItems] = useState<ShoppingItem[]>([])
   const [loading, setLoading] = useState(true)
   const [newItem, setNewItem] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<ShoppingItem | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -36,7 +48,7 @@ export default function Shopping() {
     if (!newItem.trim() || !user) return
     const { error } = await addShoppingItem(newItem.trim(), user.id)
     if (error) {
-      toast({ title: 'Erro', description: 'Nao foi possivel adicionar.', variant: 'destructive' })
+      toast({ title: 'Erro', description: 'Não foi possível adicionar.', variant: 'destructive' })
       return
     }
     toast({ title: 'Item adicionado!' })
@@ -47,11 +59,24 @@ export default function Shopping() {
   const handlePurchase = async (id: string) => {
     const { error } = await markPurchased(id)
     if (error) {
-      toast({ title: 'Erro', description: 'Nao foi possivel marcar.', variant: 'destructive' })
+      toast({ title: 'Erro', description: 'Não foi possível marcar.', variant: 'destructive' })
       return
     }
     setItems((prev) => prev.filter((i) => i.id !== id))
     toast({ title: 'Item marcado como comprado!' })
+  }
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    const { error } = await deleteShoppingItem(deleteTarget.id)
+    if (error) {
+      toast({ title: 'Erro', description: 'Não foi possível excluir.', variant: 'destructive' })
+      setDeleteTarget(null)
+      return
+    }
+    setItems((prev) => prev.filter((i) => i.id !== deleteTarget.id))
+    toast({ title: 'Item excluído com sucesso!' })
+    setDeleteTarget(null)
   }
 
   if (loading) {
@@ -71,7 +96,7 @@ export default function Shopping() {
         <p className="text-muted-foreground mt-1">
           {role === 'owner'
             ? 'Marque os itens conforme forem comprados.'
-            : 'Adicione itens que estao acabando.'}
+            : 'Adicione itens que estão acabando.'}
         </p>
       </div>
 
@@ -118,13 +143,23 @@ export default function Shopping() {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-foreground">{item.item_name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Adicionado por {item.profiles?.full_name || 'Usuario'} ·{' '}
+                    Adicionado por {item.profiles?.full_name || 'Usuário'} ·{' '}
                     {new Date(item.created_at).toLocaleDateString('pt-BR', {
                       day: '2-digit',
                       month: '2-digit',
                     })}
                   </p>
                 </div>
+                {role === 'owner' && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setDeleteTarget(item)}
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </li>
             ))}
             {items.length === 0 && (
@@ -135,6 +170,27 @@ export default function Shopping() {
           </ul>
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent className="sm:max-w-[420px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Item</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza de que deseja excluir este item da lista de compras? Esta ação não pode
+              ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

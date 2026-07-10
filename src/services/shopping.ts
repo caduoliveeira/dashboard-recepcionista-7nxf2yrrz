@@ -40,3 +40,8 @@ export const markPurchased = async (id: string) => {
   const { error } = await supabase.from('shopping_list').update({ is_purchased: true }).eq('id', id)
   return { error }
 }
+
+export const deleteShoppingItem = async (id: string) => {
+  const { error } = await supabase.from('shopping_list').delete().eq('id', id)
+  return { error }
+}

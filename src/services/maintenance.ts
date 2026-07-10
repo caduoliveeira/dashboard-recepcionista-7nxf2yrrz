@@ -63,3 +63,8 @@ export const updateTicketStatus = async (id: string, status: string) => {
     .single()
   return { data: data as unknown as MaintenanceTicket | null, error }
 }
+
+export const deleteTicket = async (id: string) => {
+  const { error } = await supabase.from('maintenance_tickets').delete().eq('id', id)
+  return { error }
+}

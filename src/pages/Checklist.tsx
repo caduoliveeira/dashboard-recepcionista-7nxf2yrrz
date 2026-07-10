@@ -210,19 +210,13 @@ export default function Checklist() {
             })}
           </div>
           {role === 'owner' && (
-            <>
-              <Button
-                variant="outline"
-                onClick={() => setCategoryModalOpen(true)}
-                className="gap-2"
-              >
-                <Settings2 className="h-4 w-4" /> Turnos
-              </Button>
-              <Button onClick={() => setModalOpen(true)} className="gap-2">
-                <Plus className="h-4 w-4" /> Nova Tarefa
-              </Button>
-            </>
+            <Button variant="outline" onClick={() => setCategoryModalOpen(true)} className="gap-2">
+              <Settings2 className="h-4 w-4" /> Turnos
+            </Button>
           )}
+          <Button onClick={() => setModalOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" /> Nova Tarefa
+          </Button>
         </div>
       </div>
 

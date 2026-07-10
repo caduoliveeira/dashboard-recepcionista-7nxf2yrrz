@@ -3,6 +3,7 @@ import {
   fetchTickets,
   createTicket,
   updateTicketStatus,
+  deleteTicket,
   type MaintenanceTicket,
 } from '@/services/maintenance'
 import { useAuth } from '@/hooks/use-auth'
@@ -11,7 +12,17 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Wrench, Plus, CheckCircle2, Clock, AlertCircle } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Wrench, Plus, CheckCircle2, Clock, AlertCircle, Trash2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 
@@ -38,6 +49,7 @@ export default function Maintenance() {
   const [tickets, setTickets] = useState<MaintenanceTicket[]>([])
   const [loading, setLoading] = useState(true)
   const [description, setDescription] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<MaintenanceTicket | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -57,7 +69,7 @@ export default function Maintenance() {
     if (error) {
       toast({
         title: 'Erro',
-        description: 'Nao foi possivel criar o ticket.',
+        description: 'Não foi possível criar o ticket.',
         variant: 'destructive',
       })
       return
@@ -70,11 +82,24 @@ export default function Maintenance() {
   const handleStatusChange = async (id: string, status: string) => {
     const { error } = await updateTicketStatus(id, status)
     if (error) {
-      toast({ title: 'Erro', description: 'Nao foi possivel atualizar.', variant: 'destructive' })
+      toast({ title: 'Erro', description: 'Não foi possível atualizar.', variant: 'destructive' })
       return
     }
     setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)))
     toast({ title: 'Status atualizado!' })
+  }
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    const { error } = await deleteTicket(deleteTarget.id)
+    if (error) {
+      toast({ title: 'Erro', description: 'Não foi possível excluir.', variant: 'destructive' })
+      setDeleteTarget(null)
+      return
+    }
+    setTickets((prev) => prev.filter((t) => t.id !== deleteTarget.id))
+    toast({ title: 'Ticket excluído com sucesso!' })
+    setDeleteTarget(null)
   }
 
   if (loading) {
@@ -90,7 +115,7 @@ export default function Maintenance() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Manutencao</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Manutenção</h1>
         <p className="text-muted-foreground mt-1">
           Reporte e acompanhe problemas de equipamentos e facilities.
         </p>
@@ -132,7 +157,7 @@ export default function Maintenance() {
                   <div className="min-w-0">
                     <p className="font-medium text-foreground">{ticket.description}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {ticket.profiles?.full_name || 'Usuario'} ·{' '}
+                      {ticket.profiles?.full_name || 'Usuário'} ·{' '}
                       {new Date(ticket.created_at).toLocaleDateString('pt-BR', {
                         day: '2-digit',
                         month: '2-digit',
@@ -167,6 +192,16 @@ export default function Maintenance() {
                       </Button>
                     </>
                   )}
+                  {role === 'owner' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setDeleteTarget(ticket)}
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -175,11 +210,32 @@ export default function Maintenance() {
         {tickets.length === 0 && (
           <Card className="border-dashed">
             <CardContent className="py-12 text-center text-muted-foreground">
-              Nenhum ticket de manutencao aberto.
+              Nenhum ticket de manutenção aberto.
             </CardContent>
           </Card>
         )}
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent className="sm:max-w-[420px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Ticket</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza de que deseja excluir este ticket de manutenção? Esta ação não pode ser
+              desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
