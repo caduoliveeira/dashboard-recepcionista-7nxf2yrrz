@@ -30,7 +30,7 @@ export function TimelineView({
   onDelete,
 }: TimelineViewProps) {
   const { scheduled, anytime } = useMemo(() => {
-    const valid = tasks.filter((t) => shouldShowTaskToday(t.recurrence_days))
+    const valid = tasks.filter((t) => shouldShowTaskToday(t.recurrence_days, t.scheduled_date))
     const withTime = valid
       .filter((t) => t.expected_time)
       .sort((a, b) => timeToMinutes(a.expected_time!) - timeToMinutes(b.expected_time!))

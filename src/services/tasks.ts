@@ -13,6 +13,7 @@ export type Task = {
   recurrence_days: string[] | null
   priority: string
   instruction_url: string | null
+  scheduled_date: string | null
 }
 
 export type TaskCompletion = {
@@ -54,6 +55,7 @@ export type CreateTaskInput = {
   recurrence_days?: string[] | null
   priority?: string
   instruction_url?: string | null
+  scheduled_date?: string | null
 }
 
 const formatTime = (time: string | null | undefined): string | null => {
@@ -162,6 +164,7 @@ export const createTask = async (input: CreateTaskInput) => {
         : null,
     priority: input.priority || 'Medium',
     instruction_url: input.instruction_url || null,
+    scheduled_date: input.scheduled_date || null,
   }
 
   const { data, error } = await supabase

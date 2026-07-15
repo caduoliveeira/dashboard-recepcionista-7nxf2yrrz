@@ -22,7 +22,11 @@ import { useToast } from '@/hooks/use-toast'
 import { createTask } from '@/services/tasks'
 import { fetchCategories, type TaskCategory } from '@/services/task-categories'
 import { uploadTaskAttachment } from '@/services/task-attachments'
-import { FileText, Upload, X } from 'lucide-react'
+import { CalendarIcon, FileText, Upload, X } from 'lucide-react'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { Calendar } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 const WEEK_DAYS = [
   { value: 'monday', label: 'Seg' },
@@ -55,6 +59,7 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
   const [instructionUrl, setInstructionUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [fileName, setFileName] = useState('')
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined)
 
   useEffect(() => {
     if (open) {
@@ -75,6 +80,7 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
     setPriority('Medium')
     setInstructionUrl(null)
     setFileName('')
+    setScheduledDate(undefined)
   }
 
   const toggleDay = (d: string) =>
@@ -141,9 +147,10 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
       category: selectedCat?.name || 'General',
       category_id: categoryId,
       expected_time: time || null,
-      is_recurring: mode === 'recurring',
-      recurrence_type: mode === 'recurring' ? freq : null,
-      recurrence_days: mode === 'recurring' && freq === 'weekly' ? days : null,
+      scheduled_date: scheduledDate ? format(scheduledDate, 'yyyy-MM-dd') : null,
+      is_recurring: mode === 'recurring' && !scheduledDate,
+      recurrence_type: mode === 'recurring' && !scheduledDate ? freq : null,
+      recurrence_days: mode === 'recurring' && freq === 'weekly' && !scheduledDate ? days : null,
       priority,
       instruction_url: instructionUrl,
     })
@@ -210,9 +217,48 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="t-time">Horário Previsto</Label>
-            <Input id="t-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="t-time">Horário Previsto</Label>
+              <Input
+                id="t-time"
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2 flex flex-col">
+              <Label>Data de Execução</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      'justify-start text-left font-normal px-3',
+                      !scheduledDate && 'text-muted-foreground',
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {scheduledDate ? (
+                      format(scheduledDate, 'PPP', { locale: ptBR })
+                    ) : (
+                      <span>Opcional</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={scheduledDate}
+                    onSelect={(date) => {
+                      setScheduledDate(date)
+                      if (date) setMode('specific')
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
           <div className="space-y-2">
             <Label>Prioridade</Label>
@@ -263,7 +309,10 @@ export function TaskCreationModal({ open, onOpenChange, onTaskCreated }: TaskCre
             <Label>Recorrência</Label>
             <RadioGroup
               value={mode}
-              onValueChange={(v) => setMode(v as 'specific' | 'recurring')}
+              onValueChange={(v) => {
+                setMode(v as 'specific' | 'recurring')
+                if (v === 'recurring') setScheduledDate(undefined)
+              }}
               className="flex gap-6"
             >
               <div className="flex items-center space-x-2">

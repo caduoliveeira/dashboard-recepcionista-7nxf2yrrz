@@ -147,7 +147,7 @@ export default function Checklist() {
   const filterCounts = useMemo(() => {
     const counts: Record<FilterType, number> = { all: 0, now: 0, upcoming: 0, completed: 0 }
     ;(tasks || []).forEach((t) => {
-      if (!shouldShowTaskToday(t.recurrence_days)) return
+      if (!shouldShowTaskToday(t.recurrence_days, t.scheduled_date)) return
       const isCompleted = completedIds.has(t.id)
       counts.all++
       if (shouldShowTask(t.expected_time, isCompleted, 'now')) counts.now++
@@ -162,7 +162,7 @@ export default function Checklist() {
       (tasks || []).filter(
         (t) =>
           shouldShowTask(t.expected_time, completedIds.has(t.id), filter) &&
-          shouldShowTaskToday(t.recurrence_days),
+          shouldShowTaskToday(t.recurrence_days, t.scheduled_date),
       ),
     [tasks, completedIds, filter],
   )

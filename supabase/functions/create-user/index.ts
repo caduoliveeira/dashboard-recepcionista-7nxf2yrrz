@@ -11,17 +11,17 @@ Deno.serve(async (req: Request) => {
     const { fullName, email, password, role } = await req.json()
 
     if (!fullName || !email || !password) {
-      return new Response(JSON.stringify({ error: 'Todos os campos são obrigatórios.' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      })
+      return new Response(
+        JSON.stringify({ error: 'Todos os campos são obrigatórios.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      )
     }
 
     if (password.length < 8) {
-      return new Response(JSON.stringify({ error: 'A senha deve ter pelo menos 8 caracteres.' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      })
+      return new Response(
+        JSON.stringify({ error: 'A senha deve ter pelo menos 8 caracteres.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      )
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -30,10 +30,10 @@ Deno.serve(async (req: Request) => {
 
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Não autorizado.' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      })
+      return new Response(
+        JSON.stringify({ error: 'Não autorizado.' }),
+        { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      )
     }
 
     const callerClient = createClient(supabaseUrl, anonKey, {
@@ -42,10 +42,10 @@ Deno.serve(async (req: Request) => {
 
     const { data: callerData } = await callerClient.auth.getUser()
     if (!callerData?.user) {
-      return new Response(JSON.stringify({ error: 'Não autorizado.' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      })
+      return new Response(
+        JSON.stringify({ error: 'Não autorizado.' }),
+        { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      )
     }
 
     const { data: callerProfile } = await callerClient
@@ -63,6 +63,23 @@ Deno.serve(async (req: Request) => {
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey)
 
+    // Check if user already exists
+    const { data: existingUsers, error: listError } = await adminClient.auth.admin.listUsers()
+    if (listError) {
+      return new Response(
+        JSON.stringify({ error: 'Erro ao verificar usuários existentes.' }),
+        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      )
+    }
+    
+    const emailExists = existingUsers?.users?.some(u => u.email === email)
+    if (emailExists) {
+      return new Response(
+        JSON.stringify({ error: 'Este e-mail já está cadastrado.' }),
+        { status: 409, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      )
+    }
+
     const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
       email,
       password,
@@ -71,37 +88,47 @@ Deno.serve(async (req: Request) => {
     })
 
     if (authError) {
-      return new Response(JSON.stringify({ error: authError.message }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      })
+      let errorMsg = authError.message;
+      if (errorMsg.toLowerCase().includes('already registered')) {
+        errorMsg = 'Este e-mail já está cadastrado.';
+        return new Response(
+          JSON.stringify({ error: errorMsg }),
+          { status: 409, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+        )
+      }
+      return new Response(
+        JSON.stringify({ error: errorMsg }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      )
     }
 
-    const { error: profileError } = await adminClient.from('profiles').upsert(
-      {
+    // Wait a brief moment to allow the on_auth_user_created trigger to run
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const { error: profileError } = await adminClient
+      .from('profiles')
+      .upsert({
         id: authData.user.id,
         full_name: fullName,
         role: role || 'receptionist',
         is_active: true,
-      },
-      { onConflict: 'id' },
-    )
+      }, { onConflict: 'id' })
 
     if (profileError) {
-      return new Response(JSON.stringify({ error: 'Erro ao criar perfil do usuário.' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      })
+      return new Response(
+        JSON.stringify({ error: 'Erro ao atualizar perfil do usuário.' }),
+        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      )
     }
 
-    return new Response(JSON.stringify({ success: true, userId: authData.user.id }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    })
+    return new Response(
+      JSON.stringify({ success: true, userId: authData.user.id }),
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+    )
   } catch (err) {
-    return new Response(JSON.stringify({ error: 'Erro interno do servidor.' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    })
+    return new Response(
+      JSON.stringify({ error: 'Erro interno do servidor.' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+    )
   }
 })

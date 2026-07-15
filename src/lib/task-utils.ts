@@ -1,3 +1,5 @@
+import { format } from 'date-fns'
+
 export function parseTimeToMinutes(time: string): number {
   const parts = time.split(':').map(Number)
   return parts[0] * 60 + (parts[1] || 0)
@@ -31,7 +33,14 @@ export function getTodayDayName(): string {
   return days[new Date().getDay()]
 }
 
-export function shouldShowTaskToday(recurrenceDays: string[] | null): boolean {
+export function shouldShowTaskToday(
+  recurrenceDays: string[] | null,
+  scheduledDate?: string | null,
+): boolean {
+  if (scheduledDate) {
+    const today = format(new Date(), 'yyyy-MM-dd')
+    return scheduledDate === today
+  }
   if (!recurrenceDays || recurrenceDays.length === 0) return true
   return recurrenceDays.includes(getTodayDayName())
 }

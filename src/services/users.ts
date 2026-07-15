@@ -35,6 +35,29 @@ export const createUser = async (input: {
   const { data, error } = await supabase.functions.invoke('create-user', {
     body: input,
   })
+
+  if (error) {
+    let errorMessage = error.message
+
+    // Try to extract the custom error message from the response body
+    if (typeof error === 'object' && 'context' in error) {
+      try {
+        const context = (error as any).context
+        if (context && typeof context.json === 'function') {
+          const clone = context.clone()
+          const errData = await clone.json()
+          if (errData && errData.error) {
+            errorMessage = errData.error
+          }
+        }
+      } catch (e) {
+        // Ignore extraction errors
+      }
+    }
+
+    return { data: null, error: new Error(errorMessage) }
+  }
+
   return { data, error }
 }
 

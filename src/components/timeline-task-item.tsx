@@ -9,6 +9,7 @@ import {
   Repeat,
   Ban,
   Trash2,
+  CalendarIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Card } from '@/components/ui/card'
@@ -162,6 +163,11 @@ export function TimelineTaskItem({
                 <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded border border-border bg-muted/50 text-muted-foreground uppercase">
                   <Repeat className="h-3 w-3" />{' '}
                   {task.recurrence_type === 'daily' ? 'Diária' : 'Semanal'}
+                </span>
+              )}
+              {task.scheduled_date && !isCompleted && (
+                <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-500/20 bg-blue-500/10 text-blue-700 uppercase">
+                  <CalendarIcon className="h-3 w-3" /> Hoje
                 </span>
               )}
             </div>
